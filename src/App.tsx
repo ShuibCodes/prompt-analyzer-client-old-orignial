@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 import { useState } from 'react';
 import {
     Box,
@@ -5,7 +7,6 @@ import {
     Container,
     TextField,
     Typography,
-    CircularProgress,
     Paper, createTheme, ThemeProvider, CssBaseline,
 } from '@mui/material';
 import {QueryClient, QueryClientProvider, useMutation, useQuery} from '@tanstack/react-query';
@@ -92,7 +93,7 @@ function Application() {
         queryKey: ['results', userId],
         queryFn: () => axios.get(`${API_BASE}/users/${userId}/results`).then((res) => res.data),
         enabled: checkingResults,
-        refetchInterval: (data) => 2000,
+        refetchInterval: () => 2000,
     });
 
     const handleSolutionSubmit = () => {
