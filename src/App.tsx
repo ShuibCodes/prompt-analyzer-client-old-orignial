@@ -12,6 +12,11 @@ import {
 import {QueryClient, QueryClientProvider, useMutation, useQuery} from '@tanstack/react-query';
 import axios from 'axios';
 
+function countNonWhitespaceCharacters(str: string) {
+    const strWithoutWhitespace = str.replace(/\s/g, "");
+    return strWithoutWhitespace.length;
+}
+
 const convertArrayToObject = (array, key) => {
     const initialValue = {};
     return array.reduce((obj, item) => {
@@ -96,6 +101,8 @@ function Application() {
         refetchInterval: () => 2000,
     });
 
+    const SOLUTION_MIN_NON_WHITESPACE_CHARACTERS = 10;
+
     const handleSolutionSubmit = () => {
         const task = tasksQuery.data?.[currentTaskIndex];
         if (task) {
@@ -154,6 +161,8 @@ function Application() {
 
     const task = tasksQuery.data?.[currentTaskIndex];
 
+    const userSolution = userSolutions[task?.id] || '';
+
     return (
         <Container sx={{ mt: 4 }}>
             <Typography variant="h6">Task {currentTaskIndex + 1}: {task?.name}</Typography>
@@ -163,12 +172,13 @@ function Application() {
                 multiline
                 fullWidth
                 minRows={3}
-                value={userSolutions[task?.id] || ''}
+                value={userSolution}
+                placeholder={`Write at least ${SOLUTION_MIN_NON_WHITESPACE_CHARACTERS} letters or digits`}
                 onChange={(e) =>
                     setUserSolutions({ ...userSolutions, [task?.id]: e.target.value })
                 }
             />
-            <Button sx={{ mt: 2 }} variant="contained" onClick={handleSolutionSubmit}>
+            <Button sx={{ mt: 2 }} variant="contained" onClick={handleSolutionSubmit} disabled={countNonWhitespaceCharacters(userSolution) < SOLUTION_MIN_NON_WHITESPACE_CHARACTERS}>
                 Submit Solution
             </Button>
         </Container>
