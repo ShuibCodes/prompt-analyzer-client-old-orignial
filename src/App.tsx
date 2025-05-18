@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import {
     Box,
+    Grid,
     Button,
     Container,
     TextField,
@@ -29,6 +30,7 @@ const convertArrayToObject = (array, key) => {
 
 
 const API_BASE = 'http://localhost:1337/api/analyzer';
+const API_ROOT = 'http://localhost:1337';
 
 const theme = createTheme({
     colorSchemes: {
@@ -247,6 +249,22 @@ function Application() {
         <Container sx={{ mt: 4 }}>
             <Typography variant="h6">Task {currentTaskIndex + 1}: {task?.name}</Typography>
             <Typography component="p" sx={{ my: 2 }}>{task?.question}</Typography>
+            <Typography component="p" sx={{ my: 2 }}>{task?.idealPrompt}</Typography>
+            {task?.Image?.length > 0 && (
+                <Grid container spacing={2} sx={{ my: 2 }}>
+                    {task.Image.map((img, idx) => (
+                    <Grid item xs={12} sm={6} md={4} key={idx}>
+                        <Box>
+                        <img
+                            src={`${API_ROOT}${img.imageQuestion.formats.thumbnail.url}`}
+                            alt={`Question Image ${idx + 1}`}
+                            style={{ width: '100%', borderRadius: 8 }}
+                        />
+                        </Box>
+                    </Grid>
+                    ))}
+                </Grid>
+            )}
             <TextField
                 label="Your Prompt"
                 multiline
