@@ -12,6 +12,9 @@ import {
 } from '@mui/material';
 import {QueryClient, QueryClientProvider, useMutation, useQuery} from '@tanstack/react-query';
 import axios from 'axios';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 
 function countNonWhitespaceCharacters(str: string) {
     const strWithoutWhitespace = str.replace(/\s/g, "");
@@ -51,6 +54,18 @@ function App() {
             <QueryClientProvider client={queryClient}>
                 <Application />
             </QueryClientProvider>
+            <ToastContainer
+                position="top-center"
+                autoClose={5000}
+                hideProgressBar={false}
+                newestOnTop
+                closeOnClick
+                rtl={false}
+                pauseOnFocusLoss
+                draggable
+                pauseOnHover
+                theme="colored"
+            />
         </ThemeProvider>
     )
 }
@@ -64,6 +79,7 @@ function Application() {
     const [checkingResults, setCheckingResults] = useState(false);
     const [evaluatingTaskId, setEvaluatingTaskId] = useState<string | null>(null);
     const [evaluationAttempt, setEvaluationAttempt] = useState<number>(0);
+    const [showEmailAlert, setShowEmailAlert] = useState(false);
 
     const MAX_EVALUATION_ATTEMPTS = 15; // e.g., 15 attempts * 2s interval = 30s timeout for progress bar
 
@@ -72,7 +88,6 @@ function Application() {
             axios.post(`${API_BASE}/users`, data).then((res) => res.data),
         onSuccess: (data) => {
             setUserId(data.id);
-            console.log('API connected successfully, user created:', data);
         },
     });
 
@@ -114,6 +129,40 @@ function Application() {
         queryFn: () => axios.get(`${API_BASE}/users/${userId}/results`).then((res) => res.data),
         enabled: !!userId && (checkingResults || !!evaluatingTaskId),
         refetchInterval: () => 2000,
+    });
+
+    const sendResultsEmail = useMutation({
+        mutationFn: () => axios.post(`${API_BASE}/users/${userId}/send-results`),
+        onSuccess: () => {
+            console.log("Results sent successfully via email");
+            toast.success('Results have been sent to your email successfully! 🎉', {
+                position: "top-center",
+                autoClose: 5000,
+                hideProgressBar: false,
+                closeOnClick: true,
+                pauseOnHover: true,
+                draggable: true,
+                progress: undefined,
+                theme: "colored",
+                style: {
+                    fontSize: '1.1em',
+                    fontWeight: 500,
+                },
+            });
+        },
+        onError: (error: Error) => {
+            console.error("Failed to send results email:", error.message);
+            toast.error('Failed to send email. Please try again.', {
+                position: "top-center",
+                autoClose: 5000,
+                hideProgressBar: false,
+                closeOnClick: true,
+                pauseOnHover: true,
+                draggable: true,
+                progress: undefined,
+                theme: "colored",
+            });
+        }
     });
 
     // Effect to manage evaluation progress
@@ -207,9 +256,19 @@ function Application() {
         return (
             <Container sx={{ mt: 4 }}>
                 <Typography variant="h6">All tasks submitted!</Typography>
-                <Button variant="contained" onClick={() => setCheckingResults(true)}>
-                    Check My Score
-                </Button>
+                <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
+                    <Button variant="contained" onClick={() => setCheckingResults(true)}>
+                        Check My Score
+                    </Button>
+                    <Button 
+                        variant="contained" 
+                        color="primary"
+                        onClick={() => sendResultsEmail.mutate()}
+                        disabled={sendResultsEmail.isLoading}
+                    >
+                        {sendResultsEmail.isLoading ? 'Sending...' : 'Send Results to Email'}
+                    </Button>
+                </Box>
                 {criteriaQuery.data && resultsQuery.data && resultsQuery.data.score !== null && (
                     <Box mt={4}>
                         <Typography variant="h5">Final Score: {resultsQuery.data.score.toFixed(2)}</Typography>
