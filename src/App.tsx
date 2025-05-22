@@ -28,9 +28,10 @@ const convertArrayToObject = (array, key) => {
     }, initialValue);
 };
 
+const API_BASE = 'https://prompt-analyzer-api-main-8rpo.onrender.com/api/analyzer';
+const API_ROOT = 'https://prompt-analyzer-api-main-8rpo.onrender.com';
 
-const API_BASE = 'http://localhost:1337/api/analyzer';
-const API_ROOT = 'http://localhost:1337';
+
 
 const theme = createTheme({
     colorSchemes: {
