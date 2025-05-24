@@ -38,10 +38,10 @@ const convertArrayToObject = (array, key) => {
     }, initialValue);
 };
 
-const API_BASE = 'https://prompt-analyzer-api-main-8rpo.onrender.com/api/analyzer';
-const API_ROOT = 'https://prompt-analyzer-api-main-8rpo.onrender.com';
-// const API_BASE = 'http://localhost:1337/api/analyzer';
-// const API_ROOT = 'http://localhost:1337'
+const API_BASE = 'https://prompt-pal-api.onrender.com/api/analyzer';
+ const API_ROOT = 'https://prompt-pal-api.onrender.com'; 
+// const API_BASE = 'https://prompt-pal-api.onrender.com/api/analyzer'; 
+// const API_ROOT = 'https://prompt-pal-api.onrender.com';
 
 const theme = createTheme({
     colorSchemes: {
@@ -539,13 +539,6 @@ function Application() {
                     
                     {/* Show next task button only if score is good enough or max attempts reached */}
                     {(() => {
-                        const totalScore = currentTaskResult.criterionResults.reduce(
-                            (sum: number, criterion: any) => sum + criterion.score, 0
-                        );
-                        const maxPossibleScore = currentTaskResult.criterionResults.length * 5;
-                        const percentageScore = Math.round((totalScore / maxPossibleScore) * 100);
-                        
-                        if (percentageScore >= 70 || currentAttempts >= 5) {
                             return (
                                 <Button 
                                     variant="contained" 
@@ -556,8 +549,6 @@ function Application() {
                                     Next Task
                                 </Button>
                             );
-                        }
-                        return null;
                     })()}
                 </Box>
             )}
