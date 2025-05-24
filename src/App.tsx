@@ -38,10 +38,10 @@ const convertArrayToObject = (array, key) => {
     }, initialValue);
 };
 
-const API_BASE = 'https://prompt-analyzer-api-main-8rpo.onrender.com/api/analyzer';
-const API_ROOT = 'https://prompt-analyzer-api-main-8rpo.onrender.com';
-// const API_BASE = 'http://localhost:1337/api/analyzer';
-// const API_ROOT = 'http://localhost:1337'
+// const API_BASE = 'https://prompt-analyzer-api-main-8rpo.onrender.com/api/analyzer';
+// const API_ROOT = 'https://prompt-analyzer-api-main-8rpo.onrender.com';
+const API_BASE = 'http://localhost:1337/api/analyzer';
+const API_ROOT = 'http://localhost:1337'
 
 const theme = createTheme({
     colorSchemes: {
@@ -170,7 +170,11 @@ function Application() {
     });
 
     const sendResultsEmail = useMutation({
-        mutationFn: () => axios.post(`${API_BASE}/users/${userId}/send-results`),
+        mutationFn: () => {
+            const apiRoute = `${API_BASE}/users/${userId}/send-results`;
+            console.log('Making request to:', apiRoute);
+            return axios.post(apiRoute);
+        },
         onSuccess: () => {
             console.log("Results sent successfully via email");
             toast.success('Results have been sent to your email successfully! 🎉', {
