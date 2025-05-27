@@ -22,6 +22,7 @@ import TaskResults from './components/TaskResults';
 import TaskSubmission from './components/TaskSubmission';
 import FinalResults from './components/FinalResults';
 import { convertArrayToObject } from './utils';
+import TutorialVideo from './components/TutorialVideo';
 
 // Types
 interface TaskResult {
@@ -62,6 +63,7 @@ function Application() {
     const [showHint, setShowHint] = useState<Record<string, boolean>>({});
     const [showResults, setShowResults] = useState<Record<string, boolean>>({});
     const previousTaskResultsRef = useRef<Record<string, TaskResult>>({});
+    const [showTutorial, setShowTutorial] = useState(false);
 
     const createUser = useMutation({
         mutationFn: (data: { name: string; email: string }) =>
@@ -69,6 +71,7 @@ function Application() {
         onSuccess: (data) => {
             setUserId(data.documentId);
             setName(data.name);
+            setShowTutorial(true);
         },
     });
 
@@ -230,22 +233,28 @@ function Application() {
 
     if (currentTaskIndex >= tasksQuery.data?.length) {
         return (
-            <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: '#f4f6fa' }}>
-                <LeftSidebar onDailyChallenge={handleRestartQuiz} name={name} onLogout={handleLogout} />
-                <Box sx={{ flex: 1, ml: '260px', mr: '300px', p: 4, display: 'flex', justifyContent: 'center', alignItems: 'flex-start' }}>
-                    <Paper elevation={3} sx={{ width: '100%', maxWidth: 700, p: 4, borderRadius: 4, boxShadow: 3, bgcolor: '#fff' }}>
-                        <FinalResults 
-                            tasksMap={tasksQuery.data ? convertArrayToObject(tasksQuery.data, 'id') : null}
-                            criteriaData={criteriaQuery.data}
-                            resultsData={resultsQuery.data}
-                            onSendEmail={() => sendResultsEmail.mutate()}
-                            isSendingEmail={sendResultsEmail.isLoading}
-                            onRestartQuiz={handleRestartQuiz}
-                        />
-                    </Paper>
+            <>
+                <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: '#f4f6fa' }}>
+                    <LeftSidebar onDailyChallenge={handleRestartQuiz} name={name} onLogout={handleLogout} />
+                    <Box sx={{ flex: 1, ml: '260px', mr: '300px', p: 4, display: 'flex', justifyContent: 'center', alignItems: 'flex-start' }}>
+                        <Paper elevation={3} sx={{ width: '100%', maxWidth: 700, p: 4, borderRadius: 4, boxShadow: 3, bgcolor: '#fff' }}>
+                            <FinalResults 
+                                tasksMap={tasksQuery.data ? convertArrayToObject(tasksQuery.data, 'id') : null}
+                                criteriaData={criteriaQuery.data}
+                                resultsData={resultsQuery.data}
+                                onSendEmail={() => sendResultsEmail.mutate()}
+                                isSendingEmail={sendResultsEmail.isLoading}
+                                onRestartQuiz={handleRestartQuiz}
+                            />
+                        </Paper>
+                    </Box>
+                    <RightSidebar />
                 </Box>
-                <RightSidebar />
-            </Box>
+                <TutorialVideo 
+                    open={showTutorial} 
+                    onClose={() => setShowTutorial(false)} 
+                />
+            </>
         );
     }
 
@@ -261,50 +270,56 @@ function Application() {
     const canShowHint = currentAttempts >= 2 && currentScores.filter(score => score <= 20).length >= 2;
 
     return (
-        <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: '#f4f6fa' }}>
-            <LeftSidebar onDailyChallenge={handleRestartQuiz} name={name} onLogout={handleLogout} />
-            <Box sx={{ flex: 1, ml: '260px', mr: '300px', p: 4, display: 'flex', justifyContent: 'center', alignItems: 'flex-start' }}>
-                <Paper elevation={3} sx={{ width: '100%', maxWidth: 700, p: 4, borderRadius: 4, boxShadow: 3, bgcolor: '#fff' }}>
-                    <Typography variant="h6">Task {currentTaskIndex + 1}: {task?.name}</Typography>
-                    <Typography component="p" sx={{ my: 2 }}>{task?.question}</Typography>
-                    {task?.Image?.length > 0 && (
-                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, my: 2 }}>
-                            {task.Image.map((img, idx) => (
-                                <Box key={idx} sx={{ width: 'calc(33.33% - 10px)', position: 'relative' }}>
-                                    <TaskImage image={img} />
-                                </Box>
-                            ))}
-                        </Box>
-                    )}
-                    {canShowHint && (
-                        <TaskHint 
+        <>
+            <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: '#f4f6fa' }}>
+                <LeftSidebar onDailyChallenge={handleRestartQuiz} name={name} onLogout={handleLogout} />
+                <Box sx={{ flex: 1, ml: '260px', mr: '300px', p: 4, display: 'flex', justifyContent: 'center', alignItems: 'flex-start' }}>
+                    <Paper elevation={3} sx={{ width: '100%', maxWidth: 700, p: 4, borderRadius: 4, boxShadow: 3, bgcolor: '#fff' }}>
+                        <Typography variant="h6">Task {currentTaskIndex + 1}: {task?.name}</Typography>
+                        <Typography component="p" sx={{ my: 2 }}>{task?.question}</Typography>
+                        {task?.Image?.length > 0 && (
+                            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, my: 2 }}>
+                                {task.Image.map((img, idx) => (
+                                    <Box key={idx} sx={{ width: 'calc(33.33% - 10px)', position: 'relative' }}>
+                                        <TaskImage image={img} />
+                                    </Box>
+                                ))}
+                            </Box>
+                        )}
+                        {canShowHint && (
+                            <TaskHint 
+                                task={task}
+                                showHint={showHint[task?.id]}
+                                onToggleHint={() => setShowHint(prev => ({
+                                    ...prev,
+                                    [task?.id]: !prev[task?.id]
+                                }))}
+                            />
+                        )}
+                        <TaskSubmission 
                             task={task}
-                            showHint={showHint[task?.id]}
-                            onToggleHint={() => setShowHint(prev => ({
-                                ...prev,
-                                [task?.id]: !prev[task?.id]
-                            }))}
+                            userSolution={userSolution}
+                            onSolutionChange={(value) => setUserSolutions(prev => ({ ...prev, [task?.id]: value }))}
+                            onSubmit={handleSolutionSubmit}
+                            isEvaluating={!!evaluatingTaskId}
                         />
-                    )}
-                    <TaskSubmission 
-                        task={task}
-                        userSolution={userSolution}
-                        onSolutionChange={(value) => setUserSolutions(prev => ({ ...prev, [task?.id]: value }))}
-                        onSubmit={handleSolutionSubmit}
-                        isEvaluating={!!evaluatingTaskId}
-                    />
-                    {shouldShowResults && (
-                        <TaskResults 
-                            taskResult={currentTaskResult}
-                            criteriaData={criteriaQuery.data}
-                            currentAttempts={currentAttempts}
-                            onNextTask={() => setCurrentTaskIndex(prev => prev + 1)}
-                        />
-                    )}
-                </Paper>
+                        {shouldShowResults && (
+                            <TaskResults 
+                                taskResult={currentTaskResult}
+                                criteriaData={criteriaQuery.data}
+                                currentAttempts={currentAttempts}
+                                onNextTask={() => setCurrentTaskIndex(prev => prev + 1)}
+                            />
+                        )}
+                    </Paper>
+                </Box>
+                <RightSidebar />
             </Box>
-            <RightSidebar />
-        </Box>
+            <TutorialVideo 
+                open={showTutorial} 
+                onClose={() => setShowTutorial(false)} 
+            />
+        </>
     );
 }
 
