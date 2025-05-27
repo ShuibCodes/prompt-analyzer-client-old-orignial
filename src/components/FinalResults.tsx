@@ -1,52 +1,108 @@
-import { Container, Typography, Box, Button, Paper } from '@mui/material';
-import { FinalResultsProps } from './types';
+import { Paper, Box, Typography, Button, LinearProgress, Grid, Pagination } from '@mui/material';
+import CelebrationIcon from '@mui/icons-material/Celebration';
+import EmailIcon from '@mui/icons-material/Email';
+import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
+import React, { useState } from 'react';
 
-export function FinalResults({ 
-    tasksMap, 
-    criteriaData, 
-    resultsData, 
-    onSendEmail, 
-    isSendingEmail 
-}: FinalResultsProps) {
-    return (
-        <Container sx={{ mt: 4 }}>
-            <Typography variant="h6">All tasks submitted!</Typography>
-            <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
-                <Button 
-                    variant="contained" 
-                    color="primary"
-                    onClick={onSendEmail}
-                    disabled={isSendingEmail}
-                >
-                    {isSendingEmail ? 'Sending...' : 'Send Results to Email'}
-                </Button>
+const FinalResults: React.FC<{
+  tasksMap: any;
+  criteriaData: any;
+  resultsData: any;
+  onSendEmail: () => void;
+  isSendingEmail: boolean;
+  onRestartQuiz: () => void;
+}> = ({ tasksMap, criteriaData, resultsData, onSendEmail, isSendingEmail, onRestartQuiz }) => {
+  const finalScore = resultsData?.score ?? 0;
+  const scoreColor = finalScore >= 4 ? '#43a047' : finalScore >= 2.5 ? '#ffa000' : '#e53935';
+  const [currentTaskPage, setCurrentTaskPage] = useState(1);
+  const tasks = resultsData.taskResults || [];
+  const currentTask = tasks[currentTaskPage - 1];
+  const handlePageChange = (_: any, value: number) => setCurrentTaskPage(value);
+  return (
+    <Paper elevation={4} sx={{ p: 4, borderRadius: 4, bgcolor: '#f5faff', boxShadow: 3 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+        <CelebrationIcon sx={{ color: '#ff9800', fontSize: 36 }} />
+        <Typography variant="h5" fontWeight="bold">All tasks submitted!</Typography>
+      </Box>
+      <Box sx={{ display: 'flex', gap: 2, mt: 2, mb: 3 }}>
+        <Button
+          variant="contained"
+          color="primary"
+          startIcon={<EmailIcon />}
+          onClick={onSendEmail}
+          disabled={isSendingEmail}
+          sx={{ fontWeight: 700, borderRadius: 2, px: 3, py: 1 }}
+        >
+          {isSendingEmail ? 'Sending...' : 'Send Results to Email'}
+        </Button>
+        <Button
+          variant="outlined"
+          color="secondary"
+          onClick={onRestartQuiz}
+          sx={{ fontWeight: 700, borderRadius: 2, px: 3, py: 1 }}
+        >
+          Restart Quiz
+        </Button>
+      </Box>
+      {criteriaData && resultsData && resultsData.score !== null && (
+        <Box mt={4}>
+          <Box sx={{ mb: 4, textAlign: 'center' }}>
+            <Typography variant="h3" fontWeight="bold" sx={{ color: scoreColor, mb: 1, letterSpacing: 1 }}>
+              {finalScore.toFixed(2)}<span style={{ fontSize: 24, color: '#888' }}>/5</span>
+            </Typography>
+            <Box sx={{ width: '60%', mx: 'auto', mb: 1 }}>
+              <LinearProgress
+                variant="determinate"
+                value={finalScore / 5 * 100}
+                sx={{
+                  height: 12,
+                  borderRadius: 6,
+                  backgroundColor: '#e0e0e0',
+                  '& .MuiLinearProgress-bar': {
+                    backgroundColor: scoreColor,
+                    borderRadius: 6
+                  }
+                }}
+              />
             </Box>
-            {criteriaData && resultsData && resultsData.score !== null && (
-                <Box mt={4}>
-                    <Typography variant="h5">Final Score: {resultsData.score.toFixed(2)}</Typography>
-                    {resultsData.taskResults.map((task) => (
-                        <Paper key={task.taskId} sx={{ p: 2, mt: 2 }}>
-                            <Typography variant="h6">
-                                Task: {tasksMap ? tasksMap[task.taskId].name : task.taskId}
-                            </Typography>
-                            {task.criterionResults.map((criterion) => (
-                                <Box key={criterion.criterionId} mt={1}>
-                                    <Typography>
-                                        <strong>
-                                            {!criteriaData ? criterion.criterionId : criteriaData[criterion.criterionId].name}
-                                        </strong>: {criterion.score}
-                                    </Typography>
-                                    {criterion.subquestionResults.map((sub) => (
-                                        <Typography key={sub.subquestionId} sx={{ pl: 2 }}>
-                                            - {sub.feedback} (Score: {sub.score})
-                                        </Typography>
-                                    ))}
-                                </Box>
-                            ))}
-                        </Paper>
-                    ))}
+            <Typography variant="subtitle1" color="text.secondary">Average Score</Typography>
+          </Box>
+          {currentTask && (
+            <Paper elevation={2} sx={{ p: 3, borderRadius: 3, mb: 2, bgcolor: '#fff' }}>
+              <Typography variant="h6" sx={{ mb: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
+                <EmojiEventsIcon sx={{ color: '#1976d2' }} />
+                Task: {tasksMap ? tasksMap[currentTask.taskId].name : currentTask.taskId}
+              </Typography>
+              {currentTask.criterionResults.map((criterion: any) => (
+                <Box key={criterion.criterionId} mt={1} sx={{ pl: 2 }}>
+                  <Typography fontWeight="bold" sx={{ color: '#1976d2' }}>
+                    {!criteriaData ? criterion.criterionId : criteriaData[criterion.criterionId].name}
+                    <span style={{ marginLeft: 8, color: '#888', fontWeight: 400 }}>Score: {criterion.score}</span>
+                  </Typography>
+                  {criterion.subquestionResults.map((sub: any) => (
+                    <Typography key={sub.subquestionId} sx={{ pl: 2, color: '#555' }}>
+                      - {sub.feedback} <span style={{ color: '#888' }}>(Score: {sub.score})</span>
+                    </Typography>
+                  ))}
                 </Box>
-            )}
-        </Container>
-    );
-} 
+              ))}
+            </Paper>
+          )}
+          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
+            <Pagination
+              count={tasks.length}
+              page={currentTaskPage}
+              onChange={handlePageChange}
+              color="primary"
+              shape="rounded"
+              showFirstButton
+              showLastButton
+            />
+          </Box>
+        </Box>
+      )}
+    </Paper>
+  );
+};
+
+export default FinalResults; 
