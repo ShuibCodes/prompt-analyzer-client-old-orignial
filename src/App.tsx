@@ -15,12 +15,24 @@ import {
     LinearProgress,
     Alert,
     Collapse,
+    Pagination,
 } from '@mui/material';
 import {QueryClient, QueryClientProvider, useMutation, useQuery} from '@tanstack/react-query';
 import axios from 'axios';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import MenuIcon from '@mui/icons-material/Menu';
+import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
+import ListAltIcon from '@mui/icons-material/ListAlt';
+import BoltIcon from '@mui/icons-material/Bolt';
+import GroupsIcon from '@mui/icons-material/Groups';
+import SchoolIcon from '@mui/icons-material/School';
+import PersonIcon from '@mui/icons-material/Person';
+import LightbulbIcon from '@mui/icons-material/Lightbulb';
+import CelebrationIcon from '@mui/icons-material/Celebration';
+import EmailIcon from '@mui/icons-material/Email';
+import LogoutIcon from '@mui/icons-material/Logout';
 
 // Types
 interface TaskResult {
@@ -43,8 +55,10 @@ interface UserResult {
 }
 
 // Constants
-const API_BASE = 'https://prompt-pal-api.onrender.com/api/analyzer';
-const API_ROOT = 'https://prompt-pal-api.onrender.com';
+// const API_BASE = 'https://prompt-pal-api.onrender.com/api/analyzer';
+// const API_ROOT = 'https://prompt-pal-api.onrender.com';
+const API_BASE = 'http://localhost:1337/api/analyzer';
+const API_ROOT = 'http://localhost:1337';
 const SOLUTION_MIN_NON_WHITESPACE_CHARACTERS = 10;
 
 // Theme
@@ -73,39 +87,51 @@ function LoginForm({ onSubmit, onSkip }: { onSubmit: (data: { email: string; nam
     const [name, setName] = useState('');
 
     return (
-        <Container sx={{ mt: 4 }}>
-            <Typography variant="h5" gutterBottom>
-                Welcome! Enter your info to begin:
-            </Typography>
-            <TextField 
-                label="Email" 
-                fullWidth 
-                margin="normal" 
-                value={email} 
-                onChange={(e) => setEmail(e.target.value)} 
-            />
-            <TextField 
-                label="Name" 
-                fullWidth 
-                margin="normal" 
-                value={name} 
-                onChange={(e) => setName(e.target.value)} 
-            />
-            <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
-                <Button 
-                    variant="contained" 
-                    onClick={() => onSubmit({ email, name })}
-                >
-                    Start
-                </Button>
-                <Button 
-                    variant="outlined" 
-                    onClick={onSkip}
-                >
-                    Skip Login
-                </Button>
-            </Box>
-        </Container>
+        <Box sx={{ minHeight: '100vh', bgcolor: '#f4f6fa', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Paper elevation={4} sx={{ p: 5, borderRadius: 4, minWidth: 350, maxWidth: 400, width: '100%', boxShadow: 3 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3, justifyContent: 'center' }}>
+                    <MenuIcon sx={{ color: '#ff6600', fontSize: 32 }} />
+                    <Typography variant="h4" fontWeight="bold" sx={{ color: '#ff6600', letterSpacing: 1 }}>Prompt Pal</Typography>
+                </Box>
+                <Typography variant="h6" gutterBottom align="center" sx={{ mb: 2, fontWeight: 700 }}>
+                    Welcome! Enter your info to begin:
+                </Typography>
+                <TextField 
+                    label="Email" 
+                    fullWidth 
+                    margin="normal" 
+                    value={email} 
+                    onChange={(e) => setEmail(e.target.value)} 
+                    sx={{ mb: 2 }}
+                />
+                <TextField 
+                    label="Name" 
+                    fullWidth 
+                    margin="normal" 
+                    value={name} 
+                    onChange={(e) => setName(e.target.value)} 
+                    sx={{ mb: 2 }}
+                />
+                <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
+                    <Button 
+                        variant="contained" 
+                        color="primary"
+                        onClick={() => onSubmit({ email, name })}
+                        sx={{ flex: 1, fontWeight: 700, borderRadius: 2, py: 1 }}
+                    >
+                        Start
+                    </Button>
+                    <Button 
+                        variant="outlined" 
+                        color="primary"
+                        onClick={onSkip}
+                        sx={{ flex: 1, fontWeight: 700, borderRadius: 2, py: 1 }}
+                    >
+                        Skip Login
+                    </Button>
+                </Box>
+            </Paper>
+        </Box>
     );
 }
 
@@ -131,16 +157,33 @@ function TaskHint({ task, showHint, onToggleHint }: {
     return (
         <Box sx={{ mb: 2 }}>
             <Button 
-                variant="outlined" 
+                variant={showHint ? 'contained' : 'outlined'}
                 color="warning"
+                startIcon={<LightbulbIcon />}
                 onClick={onToggleHint}
-                sx={{ mb: 2 }}
+                sx={{
+                    mb: 2,
+                    borderRadius: 3,
+                    fontWeight: 600,
+                    boxShadow: showHint ? 2 : 0,
+                    bgcolor: showHint ? '#fff3e0' : undefined,
+                    color: showHint ? '#ff9800' : undefined,
+                    '&:hover': {
+                        bgcolor: '#ffe0b2',
+                        color: '#e65100',
+                    },
+                    px: 3,
+                    py: 1.2,
+                    fontSize: 16
+                }}
             >
                 {showHint ? 'Hide Hint' : 'Show Hint'}
             </Button>
             {showHint && (
-                <Alert severity="info" sx={{ mb: 2 }}>
-                    <Typography variant="subtitle2" gutterBottom>💡 Hint:</Typography>
+                <Alert severity="info" sx={{ mb: 2, borderRadius: 2, boxShadow: 1, bgcolor: '#e3f2fd' }}>
+                    <Typography variant="subtitle2" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <LightbulbIcon sx={{ color: '#ffb300' }} /> Hint:
+                    </Typography>
                     <Typography variant="body2">{task.idealPrompt}</Typography>
                 </Alert>
             )}
@@ -290,54 +333,194 @@ function FinalResults({
     criteriaData, 
     resultsData, 
     onSendEmail, 
-    isSendingEmail 
+    isSendingEmail, 
+    onRestartQuiz 
 }: { 
     tasksMap: any;
     criteriaData: any;
     resultsData: UserResult;
     onSendEmail: () => void;
     isSendingEmail: boolean;
+    onRestartQuiz: () => void;
 }) {
+    const finalScore = resultsData?.score ?? 0;
+    const scoreColor = finalScore >= 4 ? '#43a047' : finalScore >= 2.5 ? '#ffa000' : '#e53935';
+    const [currentTaskPage, setCurrentTaskPage] = useState(1);
+    const tasks = resultsData.taskResults || [];
+    const currentTask = tasks[currentTaskPage - 1];
+    const handlePageChange = (_: any, value: number) => setCurrentTaskPage(value);
     return (
-        <Container sx={{ mt: 4 }}>
-            <Typography variant="h6">All tasks submitted!</Typography>
-            <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
+        <Paper elevation={4} sx={{ p: 4, borderRadius: 4, bgcolor: '#f5faff', boxShadow: 3 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+                <CelebrationIcon sx={{ color: '#ff9800', fontSize: 36 }} />
+                <Typography variant="h5" fontWeight="bold">All tasks submitted!</Typography>
+            </Box>
+            <Box sx={{ display: 'flex', gap: 2, mt: 2, mb: 3 }}>
                 <Button 
                     variant="contained" 
                     color="primary"
+                    startIcon={<EmailIcon />}
                     onClick={onSendEmail}
                     disabled={isSendingEmail}
+                    sx={{ fontWeight: 700, borderRadius: 2, px: 3, py: 1 }}
                 >
                     {isSendingEmail ? 'Sending...' : 'Send Results to Email'}
+                </Button>
+                <Button 
+                    variant="outlined"
+                    color="secondary"
+                    onClick={onRestartQuiz}
+                    sx={{ fontWeight: 700, borderRadius: 2, px: 3, py: 1 }}
+                >
+                    Restart Quiz
                 </Button>
             </Box>
             {criteriaData && resultsData && resultsData.score !== null && (
                 <Box mt={4}>
-                    <Typography variant="h5">Final Score: {resultsData.score.toFixed(2)}</Typography>
-                    {resultsData.taskResults.map((task) => (
-                        <Paper key={task.taskId} sx={{ p: 2, mt: 2 }}>
-                            <Typography variant="h6">
-                                Task: {tasksMap ? tasksMap[task.taskId].name : task.taskId}
+                    <Box sx={{ mb: 4, textAlign: 'center' }}>
+                        <Typography variant="h3" fontWeight="bold" sx={{ color: scoreColor, mb: 1, letterSpacing: 1 }}>
+                            {finalScore.toFixed(2)}<span style={{ fontSize: 24, color: '#888' }}>/5</span>
+                        </Typography>
+                        <Box sx={{ width: '60%', mx: 'auto', mb: 1 }}>
+                            <LinearProgress 
+                                variant="determinate" 
+                                value={finalScore / 5 * 100} 
+                                sx={{
+                                    height: 12,
+                                    borderRadius: 6,
+                                    backgroundColor: '#e0e0e0',
+                                    '& .MuiLinearProgress-bar': {
+                                        backgroundColor: scoreColor,
+                                        borderRadius: 6
+                                    }
+                                }}
+                            />
+                        </Box>
+                        <Typography variant="subtitle1" color="text.secondary">Average Score</Typography>
+                    </Box>
+                    {currentTask && (
+                        <Paper elevation={2} sx={{ p: 3, borderRadius: 3, mb: 2, bgcolor: '#fff' }}>
+                            <Typography variant="h6" sx={{ mb: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <EmojiEventsIcon sx={{ color: '#1976d2' }} />
+                                Task: {tasksMap ? tasksMap[currentTask.taskId].name : currentTask.taskId}
                             </Typography>
-                            {task.criterionResults.map((criterion) => (
-                                <Box key={criterion.criterionId} mt={1}>
-                                    <Typography>
-                                        <strong>
-                                            {!criteriaData ? criterion.criterionId : criteriaData[criterion.criterionId].name}
-                                        </strong>: {criterion.score}
+                            {currentTask.criterionResults.map((criterion) => (
+                                <Box key={criterion.criterionId} mt={1} sx={{ pl: 2 }}>
+                                    <Typography fontWeight="bold" sx={{ color: '#1976d2' }}>
+                                        {!criteriaData ? criterion.criterionId : criteriaData[criterion.criterionId].name}
+                                        <span style={{ marginLeft: 8, color: '#888', fontWeight: 400 }}>Score: {criterion.score}</span>
                                     </Typography>
                                     {criterion.subquestionResults.map((sub) => (
-                                        <Typography key={sub.subquestionId} sx={{ pl: 2 }}>
-                                            - {sub.feedback} (Score: {sub.score})
+                                        <Typography key={sub.subquestionId} sx={{ pl: 2, color: '#555' }}>
+                                            - {sub.feedback} <span style={{ color: '#888' }}>(Score: {sub.score})</span>
                                         </Typography>
                                     ))}
                                 </Box>
                             ))}
                         </Paper>
-                    ))}
+                    )}
+                    <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
+                        <Pagination 
+                            count={tasks.length} 
+                            page={currentTaskPage} 
+                            onChange={handlePageChange} 
+                            color="primary"
+                            shape="rounded"
+                            showFirstButton
+                            showLastButton
+                        />
+                    </Box>
                 </Box>
             )}
-        </Container>
+        </Paper>
+    );
+}
+
+function LeftSidebar({ onDailyChallenge, name, onLogout }: { onDailyChallenge: () => void, name: string, onLogout: () => void }) {
+    return (
+        <Box sx={{
+            width: 260,
+            bgcolor: 'background.paper',
+            height: '100vh',
+            borderRight: '1px solid #eee',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between',
+            position: 'fixed',
+            left: 0,
+            top: 0,
+            zIndex: 1000,
+            p: 0,
+            boxShadow: 2
+        }}>
+            <Box>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, p: 3, pb: 2 }}>
+                    <MenuIcon sx={{ color: '#ff6600', fontSize: 32 }} />
+                    <Typography variant="h5" fontWeight="bold" sx={{ color: '#ff6600', letterSpacing: 1 }}>Prompt Pal</Typography>
+                </Box>
+                <Box sx={{ mb: 2, px: 2 }}>
+                    <Button startIcon={<EmojiEventsIcon />} fullWidth sx={{ justifyContent: 'flex-start', mb: 1, borderRadius: 2, textTransform: 'none', fontWeight: 500, color: '#222', '&:hover': { bgcolor: '#f5f5f5' } }} onClick={onDailyChallenge}>Daily Challenge</Button>
+                    <Button startIcon={<ListAltIcon />} fullWidth sx={{ justifyContent: 'flex-start', mb: 1, borderRadius: 2, textTransform: 'none', fontWeight: 500, color: '#222', '&:hover': { bgcolor: '#f5f5f5' } }}>All Challenges</Button>
+                    <Button startIcon={<BoltIcon />} fullWidth sx={{ justifyContent: 'flex-start', mb: 1, borderRadius: 2, textTransform: 'none', fontWeight: 500, color: '#222', '&:hover': { bgcolor: '#f5f5f5' } }}>Prompt Improver <Box component="span" sx={{ bgcolor: '#ff5252', color: '#fff', borderRadius: 1, px: 1, ml: 1, fontSize: 12 }}>NEW</Box></Button>
+                    <Button startIcon={<GroupsIcon />} fullWidth sx={{ justifyContent: 'flex-start', mb: 1, borderRadius: 2, textTransform: 'none', fontWeight: 500, color: '#222', '&:hover': { bgcolor: '#f5f5f5' } }}>Community <Box component="span" sx={{ bgcolor: '#eee', color: '#888', borderRadius: 1, px: 1, ml: 1, fontSize: 12 }}>Coming Soon</Box></Button>
+                    <Button startIcon={<SchoolIcon />} fullWidth sx={{ justifyContent: 'flex-start', mb: 1, borderRadius: 2, textTransform: 'none', fontWeight: 500, color: '#222', '&:hover': { bgcolor: '#f5f5f5' } }}>Learn <Box component="span" sx={{ bgcolor: '#e3f2fd', color: '#1976d2', borderRadius: 1, px: 1, ml: 1, fontSize: 12 }}>Explore</Box></Button>
+                </Box>
+                <Paper elevation={2} sx={{ bgcolor: '#f5faff', borderRadius: 3, p: 2, mb: 2, mx: 2 }}>
+                    <Typography variant="caption" color="text.secondary" fontWeight={700}>STATS</Typography>
+                    <Box sx={{ bgcolor: '#e3f2fd', color: '#1976d2', borderRadius: 2, p: 1, mt: 1, mb: 1, textAlign: 'center', fontWeight: 600, fontSize: 15 }}>
+                        <span role="img" aria-label="cloud">☁️</span> No Streak Yet!
+                    </Box>
+                    <Box sx={{ bgcolor: '#fff8e1', color: '#ffb300', borderRadius: 2, p: 1, textAlign: 'center', fontWeight: 600, fontSize: 15 }}>
+                        <span role="img" aria-label="trophy">🏆</span> 0 Challenges Completed!
+                    </Box>
+                </Paper>
+                <Paper elevation={2} sx={{ bgcolor: '#fffbe7', borderRadius: 3, p: 2, mb: 2, mx: 2, textAlign: 'center' }}>
+                    <Typography variant="body2" fontWeight="bold" color="#ff9800">Become a Super Learner</Typography>
+                    <Button variant="contained" color="warning" fullWidth sx={{ mt: 1, borderRadius: 2, fontWeight: 700 }}>Try for 7 Days Free</Button>
+                </Paper>
+            </Box>
+            <Box sx={{ textAlign: 'center', py: 3, borderTop: '1px solid #eee', bgcolor: '#fafbfc', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
+                    <PersonIcon sx={{ color: '#888', fontSize: 22 }} />
+                    <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>{name}</Typography>
+                    <Button onClick={onLogout} sx={{ minWidth: 0, p: 0, ml: 1 }}><LogoutIcon sx={{ color: '#888' }} /></Button>
+                </Box>
+            </Box>
+        </Box>
+    );
+}
+
+function RightSidebar() {
+    return (
+        <Box sx={{
+            width: 300,
+            bgcolor: 'background.paper',
+            height: '100vh',
+            borderLeft: '1px solid #eee',
+            position: 'fixed',
+            right: 0,
+            top: 0,
+            zIndex: 1000,
+            p: 0,
+            boxShadow: 2
+        }}>
+            <Box sx={{ p: 3 }}>
+                <Paper elevation={2} sx={{ p: 2, mb: 3, borderRadius: 3, bgcolor: '#f5faff' }}>
+                    <Typography variant="subtitle1" fontWeight="bold" sx={{ mb: 1 }}>How It Works</Typography>
+                    <Typography variant="body2" color="text.secondary">1. Complete daily challenges.<br/>2. Improve your prompts.<br/>3. Earn gems and track your progress!</Typography>
+                </Paper>
+                <Paper elevation={2} sx={{ p: 2, borderRadius: 3, bgcolor: '#fffbe7' }}>
+                    <Typography variant="body2" fontWeight="bold" sx={{ mb: 1 }}>Gems Remaining</Typography>
+                    <Box sx={{ display: 'flex', gap: 1, mt: 1, mb: 1 }}>
+                        <Box sx={{ width: 32, height: 32, fontSize: 28, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>💎</Box>
+                        <Box sx={{ width: 32, height: 32, fontSize: 28, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>💎</Box>
+                        <Box sx={{ width: 32, height: 32, fontSize: 28, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>💎</Box>
+                        <Box sx={{ width: 32, height: 32, fontSize: 28, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>🔮</Box>
+                    </Box>
+                    <Button variant="text" color="warning" sx={{ p: 0, minWidth: 0, fontWeight: 700 }}>Get Unlimited Gems</Button>
+                </Paper>
+            </Box>
+        </Box>
     );
 }
 
@@ -357,9 +540,9 @@ function Application() {
 
     const createUser = useMutation({
         mutationFn: (data: { name: string; email: string }) =>
-            axios.post(`${API_BASE}/users`, data).then((res) => res.data),
+            axios.post(`${API_BASE}/users`, data).then((res) => res.data.id),
         onSuccess: (data) => {
-            setUserId(data.id);
+            setUserId(data.documentId);
             setName(data.name);
             setEmail(data.email);
         },
@@ -453,21 +636,20 @@ function Application() {
                 ...prev,
                 [evaluatingTaskId]: true
             }));
-            
-            const currentAttempts = (taskAttempts[evaluatingTaskId] || 0) + 1;
-            const allScores = [...(taskScores[evaluatingTaskId] || []), percentageScore];
-            const badAttempts = allScores.filter(score => score <= 20).length;
-            
-            if (badAttempts >= 2 && currentAttempts >= 2) {
-                setShowHint(prev => ({
-                    ...prev,
-                    [evaluatingTaskId]: true
-                }));
-            }
 
             setEvaluatingTaskId(null);
         }
     }, [resultsQuery.data, evaluatingTaskId]);
+
+    useEffect(() => {
+        if (userId && !name) {
+            axios.get(`${API_BASE}/users/${userId}`)
+                .then(res => {
+                    setName(res.data.name);
+                    setEmail(res.data.email);
+                });
+        }
+    }, [userId, name]);
 
     const handleSolutionSubmit = () => {
         if (!userId) return;
@@ -500,6 +682,21 @@ function Application() {
         );
     };
 
+    const handleRestartQuiz = () => {
+        setCurrentTaskIndex(0);
+        setUserSolutions({});
+        setShowHint({});
+        setShowResults({});
+        setTaskAttempts({});
+        setTaskScores({});
+    };
+
+    const handleLogout = () => {
+        setUserId(null);
+        setName('');
+        setEmail('');
+    };
+
     if (!userId) {
         return (
             <LoginForm 
@@ -511,13 +708,22 @@ function Application() {
 
     if (currentTaskIndex >= tasksQuery.data?.length) {
         return (
-            <FinalResults 
-                tasksMap={tasksQuery.data ? convertArrayToObject(tasksQuery.data, 'id') : null}
-                criteriaData={criteriaQuery.data}
-                resultsData={resultsQuery.data}
-                onSendEmail={() => sendResultsEmail.mutate()}
-                isSendingEmail={sendResultsEmail.isLoading}
-            />
+            <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: '#f4f6fa' }}>
+                <LeftSidebar onDailyChallenge={handleRestartQuiz} name={name} onLogout={handleLogout} />
+                <Box sx={{ flex: 1, ml: '260px', mr: '300px', p: 4, display: 'flex', justifyContent: 'center', alignItems: 'flex-start' }}>
+                    <Paper elevation={3} sx={{ width: '100%', maxWidth: 700, p: 4, borderRadius: 4, boxShadow: 3, bgcolor: '#fff' }}>
+                        <FinalResults 
+                            tasksMap={tasksQuery.data ? convertArrayToObject(tasksQuery.data, 'id') : null}
+                            criteriaData={criteriaQuery.data}
+                            resultsData={resultsQuery.data}
+                            onSendEmail={() => sendResultsEmail.mutate()}
+                            isSendingEmail={sendResultsEmail.isLoading}
+                            onRestartQuiz={handleRestartQuiz}
+                        />
+                    </Paper>
+                </Box>
+                <RightSidebar />
+            </Box>
         );
     }
 
@@ -533,48 +739,50 @@ function Application() {
     const canShowHint = currentAttempts >= 2 && currentScores.filter(score => score <= 20).length >= 2;
 
     return (
-        <Container sx={{ mt: 4 }}>
-            <Typography variant="h6">Task {currentTaskIndex + 1}: {task?.name}</Typography>
-            <Typography component="p" sx={{ my: 2 }}>{task?.question}</Typography>
-            
-            {task?.Image?.length > 0 && (
-                <Grid container spacing={2} sx={{ my: 2 }}>
-                    {task.Image.map((img, idx) => (
-                        <Grid item xs={12} sm={6} md={4} key={idx}>
-                            <TaskImage image={img} />
+        <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: '#f4f6fa' }}>
+            <LeftSidebar onDailyChallenge={handleRestartQuiz} name={name} onLogout={handleLogout} />
+            <Box sx={{ flex: 1, ml: '260px', mr: '300px', p: 4, display: 'flex', justifyContent: 'center', alignItems: 'flex-start' }}>
+                <Paper elevation={3} sx={{ width: '100%', maxWidth: 700, p: 4, borderRadius: 4, boxShadow: 3, bgcolor: '#fff' }}>
+                    <Typography variant="h6">Task {currentTaskIndex + 1}: {task?.name}</Typography>
+                    <Typography component="p" sx={{ my: 2 }}>{task?.question}</Typography>
+                    {task?.Image?.length > 0 && (
+                        <Grid container spacing={2} sx={{ my: 2 }}>
+                            {task.Image.map((img, idx) => (
+                                <Grid item xs={12} sm={6} md={4} key={idx}>
+                                    <TaskImage image={img} />
+                                </Grid>
+                            ))}
                         </Grid>
-                    ))}
-                </Grid>
-            )}
-
-            {canShowHint && (
-                <TaskHint 
-                    task={task}
-                    showHint={showHint[task?.id]}
-                    onToggleHint={() => setShowHint(prev => ({
-                        ...prev,
-                        [task?.id]: !prev[task?.id]
-                    }))}
-                />
-            )}
-            
-            <TaskSubmission 
-                task={task}
-                userSolution={userSolution}
-                onSolutionChange={(value) => setUserSolutions(prev => ({ ...prev, [task?.id]: value }))}
-                onSubmit={handleSolutionSubmit}
-                isEvaluating={!!evaluatingTaskId}
-            />
-            
-            {shouldShowResults && (
-                <TaskResults 
-                    taskResult={currentTaskResult}
-                    criteriaData={criteriaQuery.data}
-                    currentAttempts={currentAttempts}
-                    onNextTask={() => setCurrentTaskIndex(prev => prev + 1)}
-                />
-            )}
-        </Container>
+                    )}
+                    {canShowHint && (
+                        <TaskHint 
+                            task={task}
+                            showHint={showHint[task?.id]}
+                            onToggleHint={() => setShowHint(prev => ({
+                                ...prev,
+                                [task?.id]: !prev[task?.id]
+                            }))}
+                        />
+                    )}
+                    <TaskSubmission 
+                        task={task}
+                        userSolution={userSolution}
+                        onSolutionChange={(value) => setUserSolutions(prev => ({ ...prev, [task?.id]: value }))}
+                        onSubmit={handleSolutionSubmit}
+                        isEvaluating={!!evaluatingTaskId}
+                    />
+                    {shouldShowResults && (
+                        <TaskResults 
+                            taskResult={currentTaskResult}
+                            criteriaData={criteriaQuery.data}
+                            currentAttempts={currentAttempts}
+                            onNextTask={() => setCurrentTaskIndex(prev => prev + 1)}
+                        />
+                    )}
+                </Paper>
+            </Box>
+            <RightSidebar />
+        </Box>
     );
 }
 
