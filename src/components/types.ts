@@ -17,20 +17,22 @@ export interface UserResult {
     taskResults: TaskResult[];
 }
 
+export interface Image {
+    imageQuestion: {
+        formats: {
+            thumbnail: {
+                url: string;
+            };
+        };
+    };
+}
+
 export interface Task {
     id: string;
     name: string;
     question: string;
-    idealPrompt?: string;
-    Image?: Array<{
-        imageQuestion: {
-            formats: {
-                thumbnail: {
-                    url: string;
-                };
-            };
-        };
-    }>;
+    idealPrompt: string;
+    Image: Image[];
 }
 
 export interface Criteria {
