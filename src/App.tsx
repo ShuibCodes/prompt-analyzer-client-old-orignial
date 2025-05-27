@@ -54,11 +54,11 @@ interface UserResult {
     taskResults: TaskResult[];
 }
 
-// Constants
-// const API_BASE = 'https://prompt-pal-api.onrender.com/api/analyzer';
-// const API_ROOT = 'https://prompt-pal-api.onrender.com';
-const API_BASE = 'http://localhost:1337/api/analyzer';
-const API_ROOT = 'http://localhost:1337';
+
+const API_BASE = 'https://prompt-pal-api.onrender.com/api/analyzer';
+const API_ROOT = 'https://prompt-pal-api.onrender.com';
+// const API_BASE = 'http://localhost:1337/api/analyzer';
+// const API_ROOT = 'http://localhost:1337';
 const SOLUTION_MIN_NON_WHITESPACE_CHARACTERS = 10;
 
 // Theme
