@@ -1,4 +1,4 @@
-import { Paper, Box, Typography, Button, LinearProgress, Grid, Pagination } from '@mui/material';
+import { Box, Typography, Paper, Button, LinearProgress, Pagination } from '@mui/material';
 import CelebrationIcon from '@mui/icons-material/Celebration';
 import EmailIcon from '@mui/icons-material/Email';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
