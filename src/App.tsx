@@ -13,6 +13,7 @@ import {QueryClient, QueryClientProvider, useMutation, useQuery} from '@tanstack
 import axios from 'axios';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import Joyride, { CallBackProps, STATUS } from 'react-joyride';
 import LeftSidebar from './components/LeftSidebar';
 import RightSidebar from './components/RightSidebar';
 import LoginForm from './components/LoginForm';
@@ -22,7 +23,7 @@ import TaskResults from './components/TaskResults';
 import TaskSubmission from './components/TaskSubmission';
 import FinalResults from './components/FinalResults';
 import { convertArrayToObject } from './utils';
-import TutorialVideo from './components/TutorialVideo';
+import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 
 // Types
 interface TaskResult {
@@ -45,7 +46,16 @@ const API_BASE = 'https://prompt-pal-api.onrender.com/api/analyzer';
 // Theme
 const theme = createTheme({
     colorSchemes: { dark: false },
-    shape: { borderRadius: 12 }
+    shape: { borderRadius: 12 },
+    breakpoints: {
+        values: {
+            xs: 0,
+            sm: 600,
+            md: 960,
+            lg: 1280,
+            xl: 1920,
+        },
+    },
 });
 
 const queryClient = new QueryClient();
@@ -63,7 +73,50 @@ function Application() {
     const [showHint, setShowHint] = useState<Record<string, boolean>>({});
     const [showResults, setShowResults] = useState<Record<string, boolean>>({});
     const previousTaskResultsRef = useRef<Record<string, TaskResult>>({});
-    const [showTutorial, setShowTutorial] = useState(false);
+    const [runTutorial, setRunTutorial] = useState(false);
+
+    const steps = [
+        {
+            target: 'body',
+            content: 'Welcome to Prompt Pal! Let\'s take a quick tour of how to use this platform.',
+            placement: 'center',
+            disableBeacon: true,
+        },
+        {
+            target: '.task-content',
+            content: 'Here you\'ll see the task description and any associated images. Read them carefully!',
+            placement: 'bottom',
+        },
+        {
+            target: '.solution-input',
+            content: 'This is where you\'ll write your prompt solution. Be as detailed and specific as possible!',
+            placement: 'top',
+        },
+        {
+            target: '.submit-button',
+            content: 'Click here to submit your solution and get feedback.',
+            placement: 'top',
+        },
+        {
+            target: 'body',
+            content: 'After submission, you\'ll see detailed feedback and scores here. Your performance will be evaluated based on multiple criteria.',
+            placement: 'center',
+            disableBeacon: true,
+        },
+        {
+            target: 'body',
+            content: 'If you\'re struggling, hints will become available after multiple attempts. Don\'t worry if you don\'t get it right the first time!',
+            placement: 'center',
+            disableBeacon: true,
+        }
+    ];
+
+    const handleJoyrideCallback = (data: CallBackProps) => {
+        const { status } = data;
+        if ([STATUS.FINISHED, STATUS.SKIPPED].includes(status)) {
+            setRunTutorial(false);
+        }
+    };
 
     const createUser = useMutation({
         mutationFn: (data: { name: string; email: string }) =>
@@ -71,7 +124,7 @@ function Application() {
         onSuccess: (data) => {
             setUserId(data.documentId);
             setName(data.name);
-            setShowTutorial(true);
+            setRunTutorial(true);
         },
     });
 
@@ -234,10 +287,30 @@ function Application() {
     if (currentTaskIndex >= tasksQuery.data?.length) {
         return (
             <>
-                <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: '#f4f6fa' }}>
+                <Box sx={{ 
+                    display: 'flex', 
+                    minHeight: '100vh', 
+                    bgcolor: '#f4f6fa',
+                    flexDirection: { xs: 'column', md: 'row' }
+                }}>
                     <LeftSidebar onDailyChallenge={handleRestartQuiz} name={name} onLogout={handleLogout} />
-                    <Box sx={{ flex: 1, ml: '260px', mr: '300px', p: 4, display: 'flex', justifyContent: 'center', alignItems: 'flex-start' }}>
-                        <Paper elevation={3} sx={{ width: '100%', maxWidth: 700, p: 4, borderRadius: 4, boxShadow: 3, bgcolor: '#fff' }}>
+                    <Box sx={{ 
+                        flex: 1, 
+                        ml: { xs: 0, md: '260px' }, 
+                        mr: { xs: 0, md: '300px' }, 
+                        p: { xs: 2, md: 4 }, 
+                        display: 'flex', 
+                        justifyContent: 'center', 
+                        alignItems: 'flex-start' 
+                    }}>
+                        <Paper elevation={3} sx={{ 
+                            width: '100%', 
+                            maxWidth: 700, 
+                            p: { xs: 2, md: 4 }, 
+                            borderRadius: 4, 
+                            boxShadow: 3, 
+                            bgcolor: '#fff' 
+                        }}>
                             <FinalResults 
                                 tasksMap={tasksQuery.data ? convertArrayToObject(tasksQuery.data, 'id') : null}
                                 criteriaData={criteriaQuery.data}
@@ -250,10 +323,6 @@ function Application() {
                     </Box>
                     <RightSidebar />
                 </Box>
-                <TutorialVideo 
-                    open={showTutorial} 
-                    onClose={() => setShowTutorial(false)} 
-                />
             </>
         );
     }
@@ -271,16 +340,93 @@ function Application() {
 
     return (
         <>
-            <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: '#f4f6fa' }}>
+            <Box sx={{ 
+                display: 'flex', 
+                minHeight: '100vh', 
+                bgcolor: 'linear-gradient(135deg, #f4f6fa 60%, #ffe0b2 100%)',
+                flexDirection: { xs: 'column', md: 'row' }
+            }}>
                 <LeftSidebar onDailyChallenge={handleRestartQuiz} name={name} onLogout={handleLogout} />
-                <Box sx={{ flex: 1, ml: '260px', mr: '300px', p: 4, display: 'flex', justifyContent: 'center', alignItems: 'flex-start' }}>
-                    <Paper elevation={3} sx={{ width: '100%', maxWidth: 700, p: 4, borderRadius: 4, boxShadow: 3, bgcolor: '#fff' }}>
-                        <Typography variant="h6">Task {currentTaskIndex + 1}: {task?.name}</Typography>
-                        <Typography component="p" sx={{ my: 2 }}>{task?.question}</Typography>
+                <Box sx={{ 
+                    flex: 1, 
+                    ml: { xs: 0, md: '260px' }, 
+                    mr: { xs: 0, md: '300px' }, 
+                    p: { xs: 2, md: 4 }, 
+                    display: 'flex', 
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'flex-start',
+                    position: 'relative',
+                }}>
+                    {/* Header Bar (always visible) */}
+                    <Box sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        width: '100%',
+                        mb: 2,
+                        mt: 1,
+                        px: 1,
+                        py: 1.5,
+                        borderRadius: 3,
+                        bgcolor: '#fffbe7',
+                        boxShadow: 1,
+                        gap: 1,
+                        justifyContent: 'center',
+                    }}>
+                        <EmojiEventsIcon sx={{ color: '#ff9800', fontSize: 28 }} />
+                        <Typography variant="h6" fontWeight={700} sx={{ color: '#ff9800', fontSize: '1.2rem', letterSpacing: 1 }}>
+                            Prompt Pal
+                        </Typography>
+                    </Box>
+                    {/* Motivational Message (always visible) */}
+                    <Typography sx={{
+                        fontWeight: 600,
+                        color: '#ff9800',
+                        fontSize: '1.1rem',
+                        mb: 1,
+                        textAlign: 'center',
+                        letterSpacing: 0.5,
+                    }}>
+                        Ready for today's challenge? Let's get creative!
+                    </Typography>
+                    {/* Decorative Icon (always visible) */}
+                    <Box sx={{
+                        display: 'flex',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        mb: 1,
+                    }}>
+                        <EmojiEventsIcon sx={{ fontSize: 40, color: '#ffd54f' }} />
+                    </Box>
+                    <Paper elevation={3} sx={{ 
+                        width: '100%', 
+                        maxWidth: 700, 
+                        p: { xs: 2, md: 4 }, 
+                        borderRadius: 4, 
+                        boxShadow: 3, 
+                        bgcolor: '#fff',
+                        border: '2px solid #ffe0b2',
+                        boxShadow: '0 4px 24px 0 #ffe08255',
+                        mt: { xs: 1, md: 0 },
+                    }} className="task-content">
+                        <Typography variant="h6" sx={{ fontSize: { xs: '1.1rem', md: '1.25rem' } }}>
+                            Task {currentTaskIndex + 1}: {task?.name}
+                        </Typography>
+                        <Typography component="p" sx={{ my: 2, fontSize: { xs: '0.9rem', md: '1rem' } }}>
+                            {task?.question}
+                        </Typography>
                         {task?.Image?.length > 0 && (
-                            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, my: 2 }}>
+                            <Box sx={{ 
+                                display: 'flex', 
+                                flexWrap: 'wrap', 
+                                gap: { xs: 1, md: 2 }, 
+                                my: 2 
+                            }}>
                                 {task.Image.map((img, idx) => (
-                                    <Box key={idx} sx={{ width: 'calc(33.33% - 10px)', position: 'relative' }}>
+                                    <Box key={idx} sx={{ 
+                                        width: { xs: '100%', sm: 'calc(50% - 8px)', md: 'calc(33.33% - 10px)' }, 
+                                        position: 'relative' 
+                                    }}>
                                         <TaskImage image={img} />
                                     </Box>
                                 ))}
@@ -294,6 +440,7 @@ function Application() {
                                     ...prev,
                                     [task?.id]: !prev[task?.id]
                                 }))}
+                                className="hint-section"
                             />
                         )}
                         <TaskSubmission 
@@ -302,6 +449,7 @@ function Application() {
                             onSolutionChange={(value) => setUserSolutions(prev => ({ ...prev, [task?.id]: value }))}
                             onSubmit={handleSolutionSubmit}
                             isEvaluating={!!evaluatingTaskId}
+                            className="solution-input"
                         />
                         {shouldShowResults && (
                             <TaskResults 
@@ -309,15 +457,99 @@ function Application() {
                                 criteriaData={criteriaQuery.data}
                                 currentAttempts={currentAttempts}
                                 onNextTask={() => setCurrentTaskIndex(prev => prev + 1)}
+                                className="results-section"
                             />
                         )}
                     </Paper>
                 </Box>
                 <RightSidebar />
             </Box>
-            <TutorialVideo 
-                open={showTutorial} 
-                onClose={() => setShowTutorial(false)} 
+            <Joyride
+                steps={steps}
+                run={runTutorial}
+                continuous
+                showProgress
+                showSkipButton
+                callback={handleJoyrideCallback}
+                styles={{
+                    options: {
+                        primaryColor: '#ff9800',
+                        zIndex: 10000,
+                        backgroundColor: '#fff',
+                        textColor: '#333',
+                        arrowColor: '#fff',
+                        overlayColor: 'rgba(0, 0, 0, 0.5)',
+                        fontFamily: 'Roboto, Helvetica, Arial, sans-serif',
+                    },
+                    tooltipContainer: {
+                        textAlign: 'left',
+                        maxWidth: 420,
+                        fontFamily: 'Roboto, Helvetica, Arial, sans-serif',
+                    },
+                    tooltip: {
+                        backgroundColor: '#fff',
+                        borderRadius: 20,
+                        padding: '28px 32px',
+                        fontSize: '1.05rem',
+                        boxShadow: '0 8px 32px rgba(255, 152, 0, 0.18), 0 2px 12px rgba(0,0,0,0.10)',
+                        border: '3px solid #ffb300',
+                        fontFamily: 'Roboto, Helvetica, Arial, sans-serif',
+                        position: 'relative',
+                        outline: 'none',
+                        transition: 'box-shadow 0.2s',
+                    },
+                    tooltipTitle: {
+                        fontSize: '1.3rem',
+                        fontWeight: 700,
+                        marginBottom: 14,
+                        color: '#ff9800',
+                        fontFamily: 'Roboto, Helvetica, Arial, sans-serif',
+                    },
+                    tooltipContent: {
+                        fontSize: '1.05rem',
+                        lineHeight: 1.7,
+                        color: '#333',
+                        fontFamily: 'Roboto, Helvetica, Arial, sans-serif',
+                    },
+                    buttonNext: {
+                        backgroundColor: '#ff9800',
+                        color: '#fff',
+                        fontSize: '1rem',
+                        padding: '10px 28px',
+                        borderRadius: 8,
+                        fontWeight: 600,
+                        textTransform: 'none',
+                        boxShadow: '0 2px 8px rgba(255, 152, 0, 0.18)',
+                        fontFamily: 'Roboto, Helvetica, Arial, sans-serif',
+                        border: 'none',
+                        marginLeft: 8,
+                        transition: 'background 0.2s',
+                    },
+                    buttonBack: {
+                        color: '#ff9800',
+                        background: 'none',
+                        fontWeight: 500,
+                        marginRight: 8,
+                        fontSize: '1rem',
+                        textTransform: 'none',
+                        fontFamily: 'Roboto, Helvetica, Arial, sans-serif',
+                        border: 'none',
+                    },
+                    buttonSkip: {
+                        color: '#666',
+                        background: 'none',
+                        fontSize: '1rem',
+                        textTransform: 'none',
+                        fontFamily: 'Roboto, Helvetica, Arial, sans-serif',
+                        border: 'none',
+                    },
+                    overlay: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                    },
+                    spotlight: {
+                        backgroundColor: 'transparent',
+                    },
+                }}
             />
         </>
     );

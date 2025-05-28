@@ -14,7 +14,7 @@ const TaskResults: React.FC<{
   const percentageScore = Math.round((totalScore / maxPossibleScore) * 100);
 
   return (
-    <Box sx={{ mt: 3, p: 2, bgcolor: '#f5f5f5', borderRadius: 2 }}>
+    <Box className="results-section" sx={{ mt: 4 }}>
       <Typography variant="h6" gutterBottom>
         Results for this task (Attempt {currentAttempts}):
       </Typography>

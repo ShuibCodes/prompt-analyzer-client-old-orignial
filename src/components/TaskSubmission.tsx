@@ -1,5 +1,6 @@
 import { Box, TextField, Button, LinearProgress, Typography } from '@mui/material';
 import { TaskSubmissionProps } from './types';
+import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 
 export default function TaskSubmission({ 
     userSolution, 
@@ -17,17 +18,20 @@ export default function TaskSubmission({
                 value={userSolution}
                 placeholder="Write your prompt here..."
                 onChange={(e) => onSolutionChange(e.target.value)}
+                className="solution-input"
             />
             
-            {!isEvaluating && (
-                <Button 
-                    sx={{ mt: 2 }}
-                    variant="contained" 
-                    onClick={onSubmit}
-                >
-                    Submit Solution
-                </Button>
-            )}
+            <Button
+                variant="contained"
+                color="warning"
+                onClick={onSubmit}
+                disabled={isEvaluating}
+                sx={{ mt: 2, fontWeight: 700, borderRadius: 3, py: 1.2, fontSize: '1.1rem', boxShadow: '0 2px 8px #ffe08288' }}
+                className="submit-button"
+                startIcon={<EmojiEventsIcon />}
+            >
+                {isEvaluating ? 'Evaluating...' : 'Submit Solution'}
+            </Button>
             
             {isEvaluating && (
                 <Box sx={{ mt: 2, width: '100%' }}>

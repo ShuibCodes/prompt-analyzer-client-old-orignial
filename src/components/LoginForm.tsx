@@ -1,5 +1,6 @@
 import { Box, Paper, Typography, TextField, Button } from '@mui/material';
 import React, { useState } from 'react';
+import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 
 interface LoginFormProps {
   onSubmit: (data: { email: string; name: string }) => void;
@@ -39,17 +40,18 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSubmit, onSkip }) => {
         <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
           <Button 
             variant="contained" 
-            color="primary"
+            color="warning"
             onClick={() => onSubmit({ email, name })}
-            sx={{ flex: 1, fontWeight: 700, borderRadius: 2, py: 1 }}
+            sx={{ flex: 1, fontWeight: 700, borderRadius: 3, py: 1.2, fontSize: '1.1rem', boxShadow: '0 2px 8px #ffe08288' }}
+            startIcon={<EmojiEventsIcon />}
           >
             Start
           </Button>
           <Button 
             variant="outlined" 
-            color="primary"
+            color="warning"
             onClick={onSkip}
-            sx={{ flex: 1, fontWeight: 700, borderRadius: 2, py: 1 }}
+            sx={{ flex: 1, fontWeight: 700, borderRadius: 3, py: 1.2, fontSize: '1.1rem', borderWidth: 2 }}
           >
             Skip Login
           </Button>
