@@ -1,17 +1,27 @@
 import { Box, Typography, LinearProgress, Button } from '@mui/material';
 import React from 'react';
+import ResultCharts from './ResultCharts';
+import { TaskResult, CriteriaData } from '../types';
 
-const TaskResults: React.FC<{
-  taskResult: any;
-  criteriaData: any;
+interface TaskResultsProps {
+  taskResult: TaskResult;
+  criteriaData: CriteriaData;
   currentAttempts: number;
   onNextTask: () => void;
-}> = ({ taskResult, criteriaData, currentAttempts, onNextTask }) => {
+}
+
+const TaskResults: React.FC<TaskResultsProps> = ({ taskResult, criteriaData, currentAttempts, onNextTask }) => {
   const totalScore = taskResult.criterionResults.reduce(
-    (sum: number, criterion: any) => sum + criterion.score, 0
+    (sum, criterion) => sum + criterion.score, 0
   );
   const maxPossibleScore = taskResult.criterionResults.length * 5;
   const percentageScore = Math.round((totalScore / maxPossibleScore) * 100);
+
+  // Add criterion names to the results
+  const criterionResultsWithNames = taskResult.criterionResults.map(criterion => ({
+    ...criterion,
+    name: criteriaData?.[criterion.criterionId]?.name || criterion.criterionId
+  }));
 
   return (
     <Box className="results-section" sx={{ mt: 4 }}>
@@ -22,7 +32,7 @@ const TaskResults: React.FC<{
         <Typography
           variant="h4"
           fontWeight="bold"
-          color={percentageScore >= 70 ? 'success.main' : percentageScore >= 50 ? 'warning.main' : 'error.main'}
+          color={percentageScore >= 70 ? '#4caf50' : percentageScore >= 50 ? '#ff9800' : '#f44336'}
         >
           {percentageScore}%
         </Typography>
@@ -45,12 +55,19 @@ const TaskResults: React.FC<{
           Total Score: {totalScore} / {maxPossibleScore} points
         </Typography>
       </Box>
-      {taskResult.criterionResults.map((criterion: any) => (
+
+      {/* Add the charts component */}
+      <ResultCharts 
+        criterionResults={criterionResultsWithNames}
+        currentAttempts={currentAttempts}
+      />
+
+      {taskResult.criterionResults.map(criterion => (
         <Box key={criterion.criterionId} sx={{ mb: 2 }}>
           <Typography fontWeight="bold">
             {criteriaData?.[criterion.criterionId]?.name || criterion.criterionId}: {criterion.score}
           </Typography>
-          {criterion.subquestionResults?.map((sub: any) => (
+          {criterion.subquestionResults?.map(sub => (
             <Typography key={sub.subquestionId} sx={{ pl: 2 }}>
               - {sub.feedback} (Score: {sub.score})
             </Typography>
@@ -60,7 +77,7 @@ const TaskResults: React.FC<{
       <Button
         variant="contained"
         color="primary"
-        sx={{ mt: 2 }}
+        sx={{ mt: 3 }}
         onClick={onNextTask}
       >
         Next Task

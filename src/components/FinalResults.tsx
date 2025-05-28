@@ -3,21 +3,39 @@ import CelebrationIcon from '@mui/icons-material/Celebration';
 import EmailIcon from '@mui/icons-material/Email';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import React, { useState } from 'react';
+import ResultCharts from './ResultCharts';
+import { TaskData, CriteriaData, ResultsData } from '../types';
 
-const FinalResults: React.FC<{
-  tasksMap: any;
-  criteriaData: any;
-  resultsData: any;
+interface FinalResultsProps {
+  tasksMap: TaskData;
+  criteriaData: CriteriaData;
+  resultsData: ResultsData;
   onSendEmail: () => void;
   isSendingEmail: boolean;
   onRestartQuiz: () => void;
-}> = ({ tasksMap, criteriaData, resultsData, onSendEmail, isSendingEmail, onRestartQuiz }) => {
+}
+
+const FinalResults: React.FC<FinalResultsProps> = ({ 
+  tasksMap, 
+  criteriaData, 
+  resultsData, 
+  onSendEmail, 
+  isSendingEmail, 
+  onRestartQuiz 
+}) => {
   const finalScore = resultsData?.score ?? 0;
   const scoreColor = finalScore >= 4 ? '#43a047' : finalScore >= 2.5 ? '#ffa000' : '#e53935';
   const [currentTaskPage, setCurrentTaskPage] = useState(1);
   const tasks = resultsData.taskResults || [];
   const currentTask = tasks[currentTaskPage - 1];
-  const handlePageChange = (_: any, value: number) => setCurrentTaskPage(value);
+  const handlePageChange = (_: React.ChangeEvent<unknown>, value: number) => setCurrentTaskPage(value);
+
+  // Add criterion names to the results
+  const criterionResultsWithNames = currentTask?.criterionResults.map(criterion => ({
+    ...criterion,
+    name: criteriaData?.[criterion.criterionId]?.name || criterion.criterionId
+  })) || [];
+
   return (
     <Paper elevation={4} sx={{ p: 4, borderRadius: 4, bgcolor: '#f5faff', boxShadow: 3 }}>
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
@@ -67,19 +85,27 @@ const FinalResults: React.FC<{
             </Box>
             <Typography variant="subtitle1" color="text.secondary">Average Score</Typography>
           </Box>
+
+          {/* Add the charts component */}
+          {currentTask && (
+            <ResultCharts 
+              criterionResults={criterionResultsWithNames}
+            />
+          )}
+
           {currentTask && (
             <Paper elevation={2} sx={{ p: 3, borderRadius: 3, mb: 2, bgcolor: '#fff' }}>
               <Typography variant="h6" sx={{ mb: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
                 <EmojiEventsIcon sx={{ color: '#1976d2' }} />
                 Task: {tasksMap ? tasksMap[currentTask.taskId].name : currentTask.taskId}
               </Typography>
-              {currentTask.criterionResults.map((criterion: any) => (
+              {currentTask.criterionResults.map(criterion => (
                 <Box key={criterion.criterionId} mt={1} sx={{ pl: 2 }}>
                   <Typography fontWeight="bold" sx={{ color: '#1976d2' }}>
                     {!criteriaData ? criterion.criterionId : criteriaData[criterion.criterionId].name}
                     <span style={{ marginLeft: 8, color: '#888', fontWeight: 400 }}>Score: {criterion.score}</span>
                   </Typography>
-                  {criterion.subquestionResults.map((sub: any) => (
+                  {criterion.subquestionResults.map(sub => (
                     <Typography key={sub.subquestionId} sx={{ pl: 2, color: '#555' }}>
                       - {sub.feedback} <span style={{ color: '#888' }}>(Score: {sub.score})</span>
                     </Typography>
