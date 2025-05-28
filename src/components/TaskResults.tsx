@@ -59,7 +59,6 @@ const TaskResults: React.FC<TaskResultsProps> = ({ taskResult, criteriaData, cur
       {/* Add the charts component */}
       <ResultCharts 
         criterionResults={criterionResultsWithNames}
-        currentAttempts={currentAttempts}
       />
 
       {taskResult.criterionResults.map(criterion => (
