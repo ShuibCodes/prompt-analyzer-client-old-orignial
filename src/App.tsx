@@ -45,7 +45,15 @@ const API_BASE = 'https://prompt-pal-api.onrender.com/api/analyzer';
 
 // Theme
 const theme = createTheme({
-    colorSchemes: { dark: false },
+    palette: {
+        mode: 'light',
+        primary: {
+            main: '#ff9800',
+        },
+        background: {
+            default: '#f4f6fa',
+        },
+    },
     shape: { borderRadius: 12 },
     breakpoints: {
         values: {
@@ -403,11 +411,10 @@ function Application() {
                         maxWidth: 700, 
                         p: { xs: 2, md: 4 }, 
                         borderRadius: 4, 
-                        boxShadow: 3, 
                         bgcolor: '#fff',
                         border: '2px solid #ffe0b2',
                         boxShadow: '0 4px 24px 0 #ffe08255',
-                        mt: { xs: 1, md: 0 },
+                        mt: { xs: 1, md: 0 }
                     }} className="task-content">
                         <Typography variant="h6" sx={{ fontSize: { xs: '1.1rem', md: '1.25rem' } }}>
                             Task {currentTaskIndex + 1}: {task?.name}
