@@ -3,7 +3,6 @@ import React from 'react';
 
 const RightSidebar: React.FC = () => {
     const theme = useTheme();
-    const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
     return (
         <Box sx={{
