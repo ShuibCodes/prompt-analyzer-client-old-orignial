@@ -1,9 +1,7 @@
-import { Box, Paper, Typography, Button, useTheme, useMediaQuery } from '@mui/material';
+import { Box, Paper, Typography, Button } from '@mui/material';
 import React from 'react';
 
 const RightSidebar: React.FC = () => {
-    const theme = useTheme();
-
     return (
         <Box sx={{
             width: { xs: '100%', md: 300 },
