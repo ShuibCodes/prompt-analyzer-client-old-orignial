@@ -3,11 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import { Paper } from '@mui/material';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 import Joyride, { CallBackProps, STATUS, Step } from 'react-joyride';
-import LeftSidebar from '../components/LeftSidebar';
 import RightSidebar from '../components/RightSidebar';
 import TaskImage from '../components/TaskImage';
 import TaskHint from '../components/TaskHint';
@@ -17,6 +16,7 @@ import { convertArrayToObject } from '../utils';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import type { CriteriaData } from '../types';
 import type { Image } from '../components/types';
+import './DashboardPage.css';
 
 interface CriterionResult {
     criterionId: string;
@@ -39,12 +39,10 @@ const API_BASE = 'https://prompt-pal-api.onrender.com/api/analyzer';
 interface DashboardPageProps {
     userId: string;
     name: string;
-    onLogout: () => void;
 }
 
-export default function DashboardPage({ userId, name, onLogout }: DashboardPageProps) {
+export default function DashboardPage({ userId, name }: DashboardPageProps) {
     const navigate = useNavigate();
-    const queryClient = useQueryClient();
     const [currentTaskIndex, setCurrentTaskIndex] = useState(0);
     const [userSolutions, setUserSolutions] = useState<Record<string, string>>({});
     const [evaluatingTaskId, setEvaluatingTaskId] = useState<string | null>(null);
@@ -216,40 +214,19 @@ export default function DashboardPage({ userId, name, onLogout }: DashboardPageP
     }, []);
 
     const handleSolutionSubmit = () => {
-        if (!userId) return;
-        const task = tasksQuery.data?.[currentTaskIndex];
-        if (!task) return;
-      
-        const id = task.id;
-        const previousResult = resultsQuery.data?.taskResults.find((r: TaskResult) => r.taskId === id);
-        previousTaskResultsRef.current[id] = previousResult;
-      
-        queryClient.removeQueries({ queryKey: ['results', userId] });
-      
-        setShowHint(prev => ({ ...prev, [id]: false }));
-        setShowResults(prev => ({ ...prev, [id]: false }));
-      
-        setEvaluatingTaskId(id);
-      
-        submitSolution.mutate(
-            {
-                taskId: id,
-                solutionPrompt: userSolutions[id] || ''
-            },
-            {
-                onSuccess: () => console.log(`Submitted task ${id}, polling for new results…`),
-            }
+        if (!task || !userSolution || submitSolution.isPending || !!evaluatingTaskId) {
+            return;
+        }
+        
+        console.log('Submitting solution for task:', task.id, 'Solution:', userSolution);
+        
+        setEvaluatingTaskId(task.id);
+        
+        previousTaskResultsRef.current[task.id] = resultsQuery.data?.taskResults.find(
+            (r: TaskResult) => r.taskId === task.id
         );
-    };
-
-    const handleRestartQuiz = () => {
-        setCurrentTaskIndex(0);
-        setUserSolutions({});
-        setShowHint({});
-        setShowResults({});
-        setTaskAttempts({});
-        setTaskScores({});
-        navigate('/dashboard');
+        
+        submitSolution.mutate({ taskId: task.id, solutionPrompt: userSolution });
     };
 
     const task = tasksQuery.data?.[currentTaskIndex];
@@ -264,96 +241,33 @@ export default function DashboardPage({ userId, name, onLogout }: DashboardPageP
     const canShowHint = currentAttempts >= 2 && currentScores.filter(score => score <= 20).length >= 2;
 
     // Show loading with proper layout instead of blank page
-    if (tasksQuery.isLoading) {
+    if (tasksQuery.isLoading || criteriaQuery.isLoading) {
         return (
             <>
-                <Box sx={{ 
-                    display: 'flex', 
-                    minHeight: '100vh', 
-                    bgcolor: 'linear-gradient(135deg, #f4f6fa 60%, #ffe0b2 100%)',
-                    flexDirection: { xs: 'column', md: 'row' }
-                }}>
-                    <LeftSidebar onDailyChallenge={handleRestartQuiz} name={name} onLogout={onLogout} />
-                    <Box sx={{ 
-                        flex: 1, 
-                        ml: { xs: 0, md: '260px' }, 
-                        mr: { xs: 0, md: '300px' }, 
-                        p: { xs: 2, md: 4 }, 
-                        display: 'flex', 
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        position: 'relative',
-                    }}>
-                        {/* Header Bar */}
-                        <Box sx={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            width: '100%',
-                            mb: 4,
-                            px: 1,
-                            py: 1.5,
-                            borderRadius: 3,
-                            bgcolor: '#fffbe7',
-                            boxShadow: 1,
-                            gap: 1,
-                            justifyContent: 'center',
-                            position: 'fixed',
-                            top: 20,
-                            left: { xs: 20, md: '280px' },
-                            right: { xs: 20, md: '320px' },
-                            zIndex: 10,
-                        }}>
-                            <EmojiEventsIcon sx={{ color: '#ff9800', fontSize: 28 }} />
-                            <Typography variant="h6" fontWeight={700} sx={{ color: '#ff9800', fontSize: '1.2rem', letterSpacing: 1 }}>
-                                Prompt Pal
-                            </Typography>
-                        </Box>
-                        
-                        {/* Loading Content */}
-                        <Box sx={{ 
-                            display: 'flex', 
-                            flexDirection: 'column', 
-                            alignItems: 'center', 
-                            gap: 3,
-                            mt: 8 
-                        }}>
-                            <EmojiEventsIcon sx={{ fontSize: 60, color: '#ff9800', animation: 'pulse 2s infinite' }} />
-                            <Typography variant="h5" sx={{ color: '#ff9800', fontWeight: 600 }}>
-                                Preparing Your Challenge...
-                            </Typography>
-                            <Typography sx={{ color: '#666', textAlign: 'center', maxWidth: 400 }}>
-                                Loading your personalized tasks and getting everything ready for you!
-                            </Typography>
-                            <Box sx={{ 
-                                width: 200, 
-                                height: 4, 
-                                bgcolor: '#ffe0b2', 
-                                borderRadius: 2,
-                                overflow: 'hidden',
-                                position: 'relative'
-                            }}>
-                                <Box sx={{
-                                    width: '100%',
-                                    height: '100%',
-                                    bgcolor: '#ff9800',
-                                    borderRadius: 2,
-                                    animation: 'loading 1.5s ease-in-out infinite',
-                                    '@keyframes loading': {
-                                        '0%': { transform: 'translateX(-100%)' },
-                                        '50%': { transform: 'translateX(0%)' },
-                                        '100%': { transform: 'translateX(100%)' }
-                                    },
-                                    '@keyframes pulse': {
-                                        '0%, 100%': { opacity: 1 },
-                                        '50%': { opacity: 0.5 }
-                                    }
-                                }} />
-                            </Box>
+                <Box className="dashboard-loading-content">
+                    {/* Header Bar */}
+                    <Box className="dashboard-loading-header">
+                        <EmojiEventsIcon className="dashboard-loading-icon" />
+                        <Typography variant="h6" className="dashboard-loading-title">
+                            Prompt Pal
+                        </Typography>
+                    </Box>
+                    
+                    {/* Loading Content */}
+                    <Box className="dashboard-loading-container">
+                        <EmojiEventsIcon className="dashboard-loading-main-icon" />
+                        <Typography variant="h5" className="dashboard-loading-main-title">
+                            Preparing Your Challenge...
+                        </Typography>
+                        <Typography className="dashboard-loading-subtitle">
+                            Loading your personalized tasks and getting everything ready for you!
+                        </Typography>
+                        <Box className="dashboard-loading-progress-container">
+                            <Box className="dashboard-loading-progress-bar" />
                         </Box>
                     </Box>
-                    <RightSidebar />
                 </Box>
+                <RightSidebar />
             </>
         );
     }
@@ -362,51 +276,23 @@ export default function DashboardPage({ userId, name, onLogout }: DashboardPageP
     if (tasksQuery.isError) {
         return (
             <>
-                <Box sx={{ 
-                    display: 'flex', 
-                    minHeight: '100vh', 
-                    bgcolor: 'linear-gradient(135deg, #f4f6fa 60%, #ffe0b2 100%)',
-                    flexDirection: { xs: 'column', md: 'row' }
-                }}>
-                    <LeftSidebar onDailyChallenge={handleRestartQuiz} name={name} onLogout={onLogout} />
-                    <Box sx={{ 
-                        flex: 1, 
-                        ml: { xs: 0, md: '260px' }, 
-                        mr: { xs: 0, md: '300px' }, 
-                        p: { xs: 2, md: 4 }, 
-                        display: 'flex', 
-                        justifyContent: 'center', 
-                        alignItems: 'center' 
-                    }}>
-                        <Paper elevation={3} sx={{ 
-                            p: 4, 
-                            textAlign: 'center',
-                            borderRadius: 4,
-                            maxWidth: 400
-                        }}>
-                            <Typography variant="h6" color="error" gutterBottom>
-                                Failed to Load Tasks
-                            </Typography>
-                            <Typography color="text.secondary" sx={{ mb: 2 }}>
-                                We couldn't load your tasks. Please try refreshing the page.
-                            </Typography>
-                            <button 
-                                onClick={() => window.location.reload()} 
-                                style={{
-                                    padding: '8px 16px',
-                                    background: '#ff9800',
-                                    color: 'white',
-                                    border: 'none',
-                                    borderRadius: '8px',
-                                    cursor: 'pointer'
-                                }}
-                            >
-                                Refresh Page
-                            </button>
-                        </Paper>
-                    </Box>
-                    <RightSidebar />
+                <Box className="dashboard-error-content">
+                    <Paper elevation={3} className="dashboard-error-paper">
+                        <Typography variant="h6" className="dashboard-error-title">
+                            Failed to Load Tasks
+                        </Typography>
+                        <Typography className="dashboard-error-subtitle">
+                            We couldn't load your tasks. Please try refreshing the page.
+                        </Typography>
+                        <button 
+                            onClick={() => window.location.reload()} 
+                            className="dashboard-error-button"
+                        >
+                            Refresh Page
+                        </button>
+                    </Paper>
                 </Box>
+                <RightSidebar />
             </>
         );
     }
@@ -414,133 +300,73 @@ export default function DashboardPage({ userId, name, onLogout }: DashboardPageP
     // If no tasks available but loaded successfully
     if (!task) {
         return (
-            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
-                <Typography>No tasks available</Typography>
+            <Box className="dashboard-no-tasks">
+                <Typography className="dashboard-no-tasks-text">No tasks available</Typography>
             </Box>
         );
     }
 
     return (
         <>
-            <Box sx={{ 
-                display: 'flex', 
-                minHeight: '100vh', 
-                bgcolor: 'linear-gradient(135deg, #f4f6fa 60%, #ffe0b2 100%)',
-                flexDirection: { xs: 'column', md: 'row' }
-            }}>
-                <LeftSidebar onDailyChallenge={handleRestartQuiz} name={name} onLogout={onLogout} />
-                <Box sx={{ 
-                    flex: 1, 
-                    ml: { xs: 0, md: '260px' }, 
-                    mr: { xs: 0, md: '300px' }, 
-                    p: { xs: 2, md: 4 }, 
-                    display: 'flex', 
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'flex-start',
-                    position: 'relative',
-                }}>
-                    {/* Header Bar */}
-                    <Box sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        width: '100%',
-                        mb: 2,
-                        mt: 1,
-                        px: 1,
-                        py: 1.5,
-                        borderRadius: 3,
-                        bgcolor: '#fffbe7',
-                        boxShadow: 1,
-                        gap: 1,
-                        justifyContent: 'center',
-                    }}>
-                        <EmojiEventsIcon sx={{ color: '#ff9800', fontSize: 28 }} />
-                        <Typography variant="h6" fontWeight={700} sx={{ color: '#ff9800', fontSize: '1.2rem', letterSpacing: 1 }}>
-                            Prompt Pal
-                        </Typography>
-                    </Box>
-                    {/* Motivational Message */}
-                    <Typography sx={{
-                        fontWeight: 600,
-                        color: '#ff9800',
-                        fontSize: '1.1rem',
-                        mb: 1,
-                        textAlign: 'center',
-                        letterSpacing: 0.5,
-                    }}>
-                        Ready for today's challenge? Let's get creative!
+            <Box className="dashboard-main-content">
+                {/* Header Bar */}
+                <Box className="dashboard-header">
+                    <EmojiEventsIcon className="dashboard-header-icon" />
+                    <Typography variant="h6" className="dashboard-header-title">
+                        Prompt Pal
                     </Typography>
-                    {/* Decorative Icon */}
-                    <Box sx={{
-                        display: 'flex',
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        mb: 1,
-                    }}>
-                        <EmojiEventsIcon sx={{ fontSize: 40, color: '#ffd54f' }} />
-                    </Box>
-                    <Paper elevation={3} sx={{ 
-                        width: '100%', 
-                        maxWidth: 700, 
-                        p: { xs: 2, md: 4 }, 
-                        borderRadius: 4, 
-                        bgcolor: '#fff',
-                        border: '2px solid #ffe0b2',
-                        boxShadow: '0 4px 24px 0 #ffe08255',
-                        mt: { xs: 1, md: 0 }
-                    }} className="task-content">
-                        <Typography variant="h6" sx={{ fontSize: { xs: '1.1rem', md: '1.25rem' } }}>
-                            Task {currentTaskIndex + 1}: {task?.name}
-                        </Typography>
-                        <Typography component="p" sx={{ my: 2, fontSize: { xs: '0.9rem', md: '1rem' } }}>
-                            {task?.question}
-                        </Typography>
-                        {task?.Image?.length > 0 && (
-                            <Box sx={{ 
-                                display: 'flex', 
-                                flexWrap: 'wrap', 
-                                gap: { xs: 1, md: 2 }, 
-                                my: 2 
-                            }}>
-                                {task.Image.map((img: Image, idx: number) => (
-                                    <Box key={idx} sx={{ 
-                                        width: { xs: '100%', sm: 'calc(50% - 8px)', md: 'calc(33.33% - 10px)' }, 
-                                        position: 'relative' 
-                                    }}>
-                                        <TaskImage image={img} />
-                                    </Box>
-                                ))}
-                            </Box>
-                        )}
-                        {canShowHint && (
-                            <TaskHint 
-                                task={task}
-                                showHint={showHint[task?.id]}
-                                onToggleHint={() => setShowHint(prev => ({
-                                    ...prev,
-                                    [task?.id]: !prev[task?.id]
-                                }))}
-                            />
-                        )}
-                        <TaskSubmission 
-                            userSolution={userSolution}
-                            onSolutionChange={(value) => setUserSolutions(prev => ({ ...prev, [task?.id]: value }))}
-                            onSubmit={handleSolutionSubmit}
-                            isEvaluating={!!evaluatingTaskId}
-                        />
-                        {shouldShowResults && (
-                            <TaskResults 
-                                taskResult={currentTaskResult}
-                                criteriaData={criteriaQuery.data as CriteriaData || {}}
-                                currentAttempts={currentAttempts}
-                                onNextTask={() => setCurrentTaskIndex(prev => prev + 1)}
-                            />
-                        )}
-                    </Paper>
                 </Box>
-                <RightSidebar />
+                {/* Motivational Message */}
+                <Typography className="dashboard-motivational-message">
+                    Ready for today's challenge? Let's get creative!
+                </Typography>
+                {/* Decorative Icon */}
+                <Box className="dashboard-decorative-icon-container">
+                    <EmojiEventsIcon className="dashboard-decorative-icon" />
+                </Box>
+                <Paper elevation={3} className="dashboard-task-paper task-content">
+                    <Typography variant="h6" className="dashboard-task-title">
+                        Task {currentTaskIndex + 1}: {task?.name}
+                    </Typography>
+                    <Typography component="p" className="dashboard-task-question">
+                        {task?.question}
+                    </Typography>
+                    {task?.Image?.length > 0 && (
+                        <Box className="dashboard-task-images">
+                            {task.Image.map((img: Image, idx: number) => (
+                                <Box key={idx} className="dashboard-task-image-container">
+                                    <TaskImage image={img} />
+                                </Box>
+                            ))}
+                        </Box>
+                    )}
+                    {canShowHint && (
+                        <TaskHint 
+                            task={task}
+                            showHint={showHint[task?.id]}
+                            onToggleHint={() => setShowHint(prev => ({
+                                ...prev,
+                                [task?.id]: !prev[task?.id]
+                            }))}
+                        />
+                    )}
+                    <TaskSubmission 
+                        userSolution={userSolution}
+                        onSolutionChange={(value) => setUserSolutions(prev => ({ ...prev, [task?.id]: value }))}
+                        onSubmit={handleSolutionSubmit}
+                        isEvaluating={!!evaluatingTaskId}
+                    />
+                    {shouldShowResults && (
+                        <TaskResults 
+                            taskResult={currentTaskResult}
+                            criteriaData={criteriaQuery.data as CriteriaData || {}}
+                            currentAttempts={currentAttempts}
+                            onNextTask={() => setCurrentTaskIndex(prev => prev + 1)}
+                        />
+                    )}
+                </Paper>
             </Box>
+            <RightSidebar />
             <Joyride
                 steps={steps}
                 run={runTutorial}

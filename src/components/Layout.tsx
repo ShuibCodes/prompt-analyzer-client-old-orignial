@@ -1,6 +1,7 @@
 import { useState, useEffect, ReactNode } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
+import BaseLayout from './BaseLayout';
 
 const API_BASE = 'https://prompt-pal-api.onrender.com/api/analyzer';
 
@@ -174,12 +175,12 @@ export default function Layout({ children }: LayoutProps) {
 
     // For protected routes
     return (
-        <>
+        <BaseLayout name={name} onLogout={handleLogout}>
             {children({ 
                 userId, 
                 name, 
                 onLogout: handleLogout 
             } as AuthenticatedLayoutProps)}
-        </>
+        </BaseLayout>
     );
 } 

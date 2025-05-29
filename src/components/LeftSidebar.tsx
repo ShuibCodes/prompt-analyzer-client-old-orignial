@@ -12,12 +12,11 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 interface LeftSidebarProps {
-  onDailyChallenge: () => void;
   name: string;
   onLogout: () => void;
 }
 
-const LeftSidebar: React.FC<LeftSidebarProps> = ({ onDailyChallenge, name, onLogout }) => {
+const LeftSidebar: React.FC<LeftSidebarProps> = ({ name, onLogout }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [isOpen, setIsOpen] = useState(false);
@@ -25,6 +24,13 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({ onDailyChallenge, name, onLog
 
   const toggleSidebar = () => {
     setIsOpen(!isOpen);
+  };
+
+  const handleDailyChallenge = () => {
+    navigate('/dashboard');
+    if (isMobile) {
+      setIsOpen(false);
+    }
   };
 
   const handleImageGeneration = () => {
@@ -61,7 +67,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({ onDailyChallenge, name, onLog
             '&:hover': { bgcolor: '#f5f5f5' },
             py: 1.5
           }} 
-          onClick={onDailyChallenge}
+          onClick={handleDailyChallenge}
         >
           Daily Challenge
         </Button>

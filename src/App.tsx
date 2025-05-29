@@ -11,7 +11,8 @@ import Layout from './components/Layout';
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
 import ResultsPage from './pages/ResultsPage';
-import ImageGenerationPage from './pages/ImageGenerationPage';
+import ImageGenerationDashboard from './pages/ImageGenerationDashboard';
+import ImageGenerationTask from './pages/ImageGenerationTask';
 
 // Theme
 const theme = createTheme({
@@ -70,7 +71,6 @@ function App() {
                                             <DashboardPage 
                                                 userId={props.userId} 
                                                 name={props.name} 
-                                                onLogout={props.onLogout} 
                                             />
                                         );
                                     }}
@@ -105,11 +105,22 @@ function App() {
                                             return null; // This shouldn't happen due to redirects
                                         }
                                         return (
-                                            <ImageGenerationPage 
-                                                userId={props.userId} 
-                                                name={props.name} 
-                                                onLogout={props.onLogout} 
-                                            />
+                                            <ImageGenerationDashboard />
+                                        );
+                                    }}
+                                </Layout>
+                            } 
+                        />
+                        <Route 
+                            path="/image-generation/task/:taskId" 
+                            element={
+                                <Layout>
+                                    {(props) => {
+                                        if ('onUserLogin' in props) {
+                                            return null; // This shouldn't happen due to redirects
+                                        }
+                                        return (
+                                            <ImageGenerationTask />
                                         );
                                     }}
                                 </Layout>
