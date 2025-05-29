@@ -6,7 +6,7 @@ import { Paper } from '@mui/material';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import { toast } from 'react-toastify';
-import Joyride, { CallBackProps, STATUS } from 'react-joyride';
+import Joyride, { CallBackProps, STATUS, Step } from 'react-joyride';
 import LeftSidebar from '../components/LeftSidebar';
 import RightSidebar from '../components/RightSidebar';
 import TaskImage from '../components/TaskImage';
@@ -15,19 +15,23 @@ import TaskResults from '../components/TaskResults';
 import TaskSubmission from '../components/TaskSubmission';
 import { convertArrayToObject } from '../utils';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
+import type { CriteriaData } from '../types';
+import type { Image } from '../components/types';
+
+interface CriterionResult {
+    criterionId: string;
+    score: number;
+    subquestionResults: Array<{
+        subquestionId: string;
+        score: number;
+        feedback: string;
+    }>;
+}
 
 interface TaskResult {
     taskId: string;
     score: number;
-    criterionResults: Array<{
-        criterionId: string;
-        score: number;
-        subquestionResults: Array<{
-            subquestionId: string;
-            score: number;
-            feedback: string;
-        }>;
-    }>;
+    criterionResults: CriterionResult[];
 }
 
 const API_BASE = 'https://prompt-pal-api.onrender.com/api/analyzer';
@@ -51,38 +55,38 @@ export default function DashboardPage({ userId, name, onLogout }: DashboardPageP
     const previousTaskResultsRef = useRef<Record<string, TaskResult>>({});
     const [runTutorial, setRunTutorial] = useState(false);
 
-    const steps = [
+    const steps: Step[] = [
         {
             target: 'body',
             content: 'Welcome to Prompt Pal! Let\'s take a quick tour of how to use this platform.',
-            placement: 'center',
+            placement: 'center' as const,
             disableBeacon: true,
         },
         {
             target: '.task-content',
             content: 'Here you\'ll see the task description and any associated images. Read them carefully!',
-            placement: 'bottom',
+            placement: 'bottom' as const,
         },
         {
             target: '.solution-input',
             content: 'This is where you\'ll write your prompt solution. Be as detailed and specific as possible!',
-            placement: 'top',
+            placement: 'top' as const,
         },
         {
             target: '.submit-button',
             content: 'Click here to submit your solution and get feedback.',
-            placement: 'top',
+            placement: 'top' as const,
         },
         {
             target: 'body',
             content: 'After submission, you\'ll see detailed feedback and scores here. Your performance will be evaluated based on multiple criteria.',
-            placement: 'center',
+            placement: 'center' as const,
             disableBeacon: true,
         },
         {
             target: 'body',
             content: 'If you\'re struggling, hints will become available after multiple attempts. Don\'t worry if you don\'t get it right the first time!',
-            placement: 'center',
+            placement: 'center' as const,
             disableBeacon: true,
         }
     ];
@@ -166,7 +170,7 @@ export default function DashboardPage({ userId, name, onLogout }: DashboardPageP
 
         if (newResult) {
             const totalScore = newResult.criterionResults.reduce(
-                (sum, criterion) => sum + criterion.score, 0
+                (sum: number, criterion: CriterionResult) => sum + criterion.score, 0
             );
             const maxPossibleScore = newResult.criterionResults.length * 5;
             const percentageScore = Math.round((totalScore / maxPossibleScore) * 100);
@@ -217,7 +221,7 @@ export default function DashboardPage({ userId, name, onLogout }: DashboardPageP
         if (!task) return;
       
         const id = task.id;
-        const previousResult = resultsQuery.data?.taskResults.find(r => r.taskId === id);
+        const previousResult = resultsQuery.data?.taskResults.find((r: TaskResult) => r.taskId === id);
         previousTaskResultsRef.current[id] = previousResult;
       
         queryClient.removeQueries({ queryKey: ['results', userId] });
@@ -499,7 +503,7 @@ export default function DashboardPage({ userId, name, onLogout }: DashboardPageP
                                 gap: { xs: 1, md: 2 }, 
                                 my: 2 
                             }}>
-                                {task.Image.map((img, idx) => (
+                                {task.Image.map((img: Image, idx: number) => (
                                     <Box key={idx} sx={{ 
                                         width: { xs: '100%', sm: 'calc(50% - 8px)', md: 'calc(33.33% - 10px)' }, 
                                         position: 'relative' 
@@ -517,24 +521,20 @@ export default function DashboardPage({ userId, name, onLogout }: DashboardPageP
                                     ...prev,
                                     [task?.id]: !prev[task?.id]
                                 }))}
-                                className="hint-section"
                             />
                         )}
                         <TaskSubmission 
-                            task={task}
                             userSolution={userSolution}
                             onSolutionChange={(value) => setUserSolutions(prev => ({ ...prev, [task?.id]: value }))}
                             onSubmit={handleSolutionSubmit}
                             isEvaluating={!!evaluatingTaskId}
-                            className="solution-input"
                         />
                         {shouldShowResults && (
                             <TaskResults 
                                 taskResult={currentTaskResult}
-                                criteriaData={criteriaQuery.data}
+                                criteriaData={criteriaQuery.data as CriteriaData || {}}
                                 currentAttempts={currentAttempts}
                                 onNextTask={() => setCurrentTaskIndex(prev => prev + 1)}
-                                className="results-section"
                             />
                         )}
                     </Paper>
@@ -556,12 +556,10 @@ export default function DashboardPage({ userId, name, onLogout }: DashboardPageP
                         textColor: '#333',
                         arrowColor: '#fff',
                         overlayColor: 'rgba(0, 0, 0, 0.5)',
-                        fontFamily: 'Roboto, Helvetica, Arial, sans-serif',
                     },
                     tooltipContainer: {
                         textAlign: 'left',
                         maxWidth: 420,
-                        fontFamily: 'Roboto, Helvetica, Arial, sans-serif',
                     },
                     tooltip: {
                         backgroundColor: '#fff',
@@ -570,7 +568,6 @@ export default function DashboardPage({ userId, name, onLogout }: DashboardPageP
                         fontSize: '1.05rem',
                         boxShadow: '0 8px 32px rgba(255, 152, 0, 0.18), 0 2px 12px rgba(0,0,0,0.10)',
                         border: '3px solid #ffb300',
-                        fontFamily: 'Roboto, Helvetica, Arial, sans-serif',
                         position: 'relative',
                         outline: 'none',
                         transition: 'box-shadow 0.2s',
@@ -580,13 +577,11 @@ export default function DashboardPage({ userId, name, onLogout }: DashboardPageP
                         fontWeight: 700,
                         marginBottom: 14,
                         color: '#ff9800',
-                        fontFamily: 'Roboto, Helvetica, Arial, sans-serif',
                     },
                     tooltipContent: {
                         fontSize: '1.05rem',
                         lineHeight: 1.7,
                         color: '#333',
-                        fontFamily: 'Roboto, Helvetica, Arial, sans-serif',
                     },
                     buttonNext: {
                         backgroundColor: '#ff9800',
@@ -597,7 +592,6 @@ export default function DashboardPage({ userId, name, onLogout }: DashboardPageP
                         fontWeight: 600,
                         textTransform: 'none',
                         boxShadow: '0 2px 8px rgba(255, 152, 0, 0.18)',
-                        fontFamily: 'Roboto, Helvetica, Arial, sans-serif',
                         border: 'none',
                         marginLeft: 8,
                         transition: 'background 0.2s',
@@ -609,7 +603,6 @@ export default function DashboardPage({ userId, name, onLogout }: DashboardPageP
                         marginRight: 8,
                         fontSize: '1rem',
                         textTransform: 'none',
-                        fontFamily: 'Roboto, Helvetica, Arial, sans-serif',
                         border: 'none',
                     },
                     buttonSkip: {
@@ -617,7 +610,6 @@ export default function DashboardPage({ userId, name, onLogout }: DashboardPageP
                         background: 'none',
                         fontSize: '1rem',
                         textTransform: 'none',
-                        fontFamily: 'Roboto, Helvetica, Arial, sans-serif',
                         border: 'none',
                     },
                     overlay: {

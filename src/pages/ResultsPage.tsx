@@ -8,6 +8,7 @@ import LeftSidebar from '../components/LeftSidebar';
 import RightSidebar from '../components/RightSidebar';
 import FinalResults from '../components/FinalResults';
 import { convertArrayToObject } from '../utils';
+import type { TaskData, CriteriaData, ResultsData } from '../types';
 
 const API_BASE = 'https://prompt-pal-api.onrender.com/api/analyzer';
 
@@ -92,9 +93,9 @@ export default function ResultsPage({ userId, name, onLogout }: ResultsPageProps
                     bgcolor: '#fff' 
                 }}>
                     <FinalResults 
-                        tasksMap={tasksQuery.data ? convertArrayToObject(tasksQuery.data, 'id') : null}
-                        criteriaData={criteriaQuery.data}
-                        resultsData={resultsQuery.data}
+                        tasksMap={tasksQuery.data ? convertArrayToObject(tasksQuery.data, 'id') as TaskData : {} as TaskData}
+                        criteriaData={criteriaQuery.data as CriteriaData || {} as CriteriaData}
+                        resultsData={resultsQuery.data as ResultsData}
                         onSendEmail={() => sendResultsEmail.mutate()}
                         isSendingEmail={sendResultsEmail.isPending}
                         onRestartQuiz={handleRestartQuiz}
