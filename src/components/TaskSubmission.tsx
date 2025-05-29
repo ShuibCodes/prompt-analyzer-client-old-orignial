@@ -1,6 +1,7 @@
-import { Box, TextField, Button, LinearProgress, Typography } from '@mui/material';
+import { Box, TextField, Button, LinearProgress, Typography, Alert, Fade } from '@mui/material';
 import { TaskSubmissionProps } from './types';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
+import { useState } from 'react';
 
 export default function TaskSubmission({ 
     userSolution, 
@@ -8,27 +9,116 @@ export default function TaskSubmission({
     onSubmit, 
     isEvaluating 
 }: TaskSubmissionProps) {
+    const [error, setError] = useState<string | null>(null);
+    const [touched, setTouched] = useState(false);
+
+    const validateSolution = (solution: string): string | null => {
+        if (!solution.trim()) {
+            return 'Please enter your prompt solution';
+        }
+        
+        // Count non-whitespace characters
+        const nonWhitespaceCount = solution.replace(/\s/g, '').length;
+        if (nonWhitespaceCount < 10) {
+            return `Your solution must contain at least 10 non-whitespace characters. Current: ${nonWhitespaceCount}`;
+        }
+        
+        if (solution.trim().length > 5000) {
+            return 'Your solution is too long (max 5000 characters)';
+        }
+        
+        return null;
+    };
+
+    const handleSolutionChange = (value: string) => {
+        onSolutionChange(value);
+        if (touched) {
+            setError(validateSolution(value));
+        }
+    };
+
+    const handleBlur = () => {
+        setTouched(true);
+        setError(validateSolution(userSolution));
+    };
+
+    const handleSubmit = () => {
+        setTouched(true);
+        const validationError = validateSolution(userSolution);
+        setError(validationError);
+        
+        if (!validationError) {
+            onSubmit();
+        }
+    };
+
+    const isValid = !error && userSolution.trim().length > 0;
+
     return (
-        <>
+        <Box>
+            {error && touched && (
+                <Fade in={true}>
+                    <Alert 
+                        severity="error" 
+                        sx={{ 
+                            mb: 2, 
+                            borderRadius: 2,
+                            '& .MuiAlert-message': {
+                                fontSize: '0.9rem',
+                            }
+                        }}
+                    >
+                        {error}
+                    </Alert>
+                </Fade>
+            )}
+
             <TextField
                 label="Your Prompt"
                 multiline
                 fullWidth
                 minRows={3}
                 value={userSolution}
-                placeholder="Write your prompt here..."
-                onChange={(e) => onSolutionChange(e.target.value)}
+                placeholder="Write your prompt here... (minimum 10 non-whitespace characters)"
+                onChange={(e) => handleSolutionChange(e.target.value)}
+                onBlur={handleBlur}
+                error={touched && !!error}
+                helperText={
+                    <Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
+                        <span style={{ fontSize: '0.75rem', color: '#666' }}>
+                            {userSolution.length}/5000 total
+                        </span>
+                    </Box>
+                }
+                disabled={isEvaluating}
                 className="solution-input"
+                sx={{
+                    '& .MuiFormHelperText-root': {
+                        fontSize: '0.8rem',
+                        marginLeft: 0,
+                        marginTop: 1,
+                    }
+                }}
             />
             
             <Button
                 variant="contained"
                 color="warning"
-                onClick={onSubmit}
-                disabled={isEvaluating}
-                sx={{ mt: 2, fontWeight: 700, borderRadius: 3, py: 1.2, fontSize: '1.1rem', boxShadow: '0 2px 8px #ffe08288' }}
+                onClick={handleSubmit}
+                disabled={isEvaluating || !isValid}
+                sx={{ 
+                    mt: 2, 
+                    fontWeight: 700, 
+                    borderRadius: 3, 
+                    py: 1.2, 
+                    fontSize: '1.1rem', 
+                    boxShadow: '0 2px 8px #ffe08288',
+                    '&:disabled': {
+                        opacity: 0.6,
+                    }
+                }}
                 className="submit-button"
-                startIcon={<EmojiEventsIcon />}
+                startIcon={isEvaluating ? undefined : <EmojiEventsIcon />}
             >
                 {isEvaluating ? 'Evaluating...' : 'Submit Solution'}
             </Button>
@@ -54,6 +144,6 @@ export default function TaskSubmission({
                     </Typography>
                 </Box>
             )}
-        </>
+        </Box>
     );
 } 

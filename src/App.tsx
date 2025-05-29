@@ -40,8 +40,8 @@ interface TaskResult {
     }>;
 }
 
-const API_BASE = 'https://prompt-pal-api.onrender.com/api/analyzer';
-// const API_BASE = 'http://localhost:1337/api/analyzer';
+//const API_BASE = 'https://prompt-pal-api.onrender.com/api/analyzer';
+const API_BASE = 'http://localhost:1337/api/analyzer';
 
 // Theme
 const theme = createTheme({
@@ -134,6 +134,32 @@ function Application() {
             setName(data.name);
             setRunTutorial(true);
         },
+        onError: (error: unknown) => {
+            console.error('User creation failed:', error);
+            // Extract a meaningful error message
+            let errorMessage = 'Failed to create user. Please try again.';
+            
+            if (typeof error === 'object' && error && 'response' in error) {
+                const axiosError = error as any; // Safe cast for axios error
+                if (axiosError.response?.data?.error?.message) {
+                    errorMessage = axiosError.response.data.error.message;
+                } else if (axiosError.response?.data?.message) {
+                    errorMessage = axiosError.response.data.message;
+                }
+            } else if (error instanceof Error) {
+                errorMessage = error.message;
+            }
+            
+            toast.error(errorMessage, {
+                position: "top-center",
+                autoClose: 5000,
+                hideProgressBar: false,
+                closeOnClick: true,
+                pauseOnHover: true,
+                draggable: true,
+                theme: "colored",
+            });
+        },
     });
 
     const tasksQuery = useQuery({
@@ -153,6 +179,33 @@ function Application() {
             axios.post(`${API_BASE}/users/${userId}/submissions`, { taskId, solutionPrompt }),
         onSuccess: () => {
             console.log("Solution submitted successfully. Waiting for results...");
+        },
+        onError: (error: unknown) => {
+            console.error('Submission failed:', error);
+            setEvaluatingTaskId(null);
+            
+            let errorMessage = 'Failed to submit your solution. Please try again.';
+            
+            if (typeof error === 'object' && error && 'response' in error) {
+                const axiosError = error as any; // Safe cast for axios error
+                if (axiosError.response?.data?.error?.message) {
+                    errorMessage = axiosError.response.data.error.message;
+                } else if (axiosError.response?.data?.message) {
+                    errorMessage = axiosError.response.data.message;
+                }
+            } else if (error instanceof Error) {
+                errorMessage = error.message;
+            }
+            
+            toast.error(errorMessage, {
+                position: "top-center",
+                autoClose: 5000,
+                hideProgressBar: false,
+                closeOnClick: true,
+                pauseOnHover: true,
+                draggable: true,
+                theme: "colored",
+            });
         },
     });
 
@@ -261,10 +314,6 @@ function Application() {
             },
             {
                 onSuccess: () => console.log(`Submitted task ${id}, polling for new results…`),
-                onError: err => {
-                    console.error('Submission failed:', err);
-                    setEvaluatingTaskId(null);
-                }
             }
         );
     };
@@ -288,6 +337,8 @@ function Application() {
             <LoginForm 
                 onSubmit={(data) => createUser.mutate(data)}
                 onSkip={() => createUser.mutate({ email: 'test@example.com', name: 'Test User' })}
+                isLoading={createUser.isPending}
+                error={createUser.error ? 'Please check your information and try again.' : null}
             />
         );
     }
