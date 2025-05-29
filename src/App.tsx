@@ -88,8 +88,6 @@ function App() {
                                         return (
                                             <ResultsPage 
                                                 userId={props.userId} 
-                                                name={props.name} 
-                                                onLogout={props.onLogout} 
                                             />
                                         );
                                     }}

@@ -4,21 +4,19 @@ import { toast } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
 import Box from '@mui/material/Box';
 import { Paper } from '@mui/material';
-import LeftSidebar from '../components/LeftSidebar';
 import RightSidebar from '../components/RightSidebar';
 import FinalResults from '../components/FinalResults';
 import { convertArrayToObject } from '../utils';
 import type { TaskData, CriteriaData, ResultsData } from '../types';
 
 const API_BASE = 'https://prompt-pal-api.onrender.com/api/analyzer';
+//const API_BASE = 'http://localhost:1337/api/analyzer';
 
 interface ResultsPageProps {
     userId: string;
-    name: string;
-    onLogout: () => void;
 }
 
-export default function ResultsPage({ userId, name, onLogout }: ResultsPageProps) {
+export default function ResultsPage({ userId }: ResultsPageProps) {
     const navigate = useNavigate();
 
     const tasksQuery = useQuery({
@@ -68,16 +66,9 @@ export default function ResultsPage({ userId, name, onLogout }: ResultsPageProps
     };
 
     return (
-        <Box sx={{ 
-            display: 'flex', 
-            minHeight: '100vh', 
-            bgcolor: '#f4f6fa',
-            flexDirection: { xs: 'column', md: 'row' }
-        }}>
-            <LeftSidebar onDailyChallenge={handleRestartQuiz} name={name} onLogout={onLogout} />
+        <>
             <Box sx={{ 
                 flex: 1, 
-                ml: { xs: 0, md: '260px' }, 
                 mr: { xs: 0, md: '300px' }, 
                 p: { xs: 2, md: 4 }, 
                 display: 'flex', 
@@ -103,6 +94,6 @@ export default function ResultsPage({ userId, name, onLogout }: ResultsPageProps
                 </Paper>
             </Box>
             <RightSidebar />
-        </Box>
+        </>
     );
 } 
