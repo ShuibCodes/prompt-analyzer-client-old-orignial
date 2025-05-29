@@ -7,7 +7,9 @@ import GroupsIcon from '@mui/icons-material/Groups';
 import SchoolIcon from '@mui/icons-material/School';
 import PersonIcon from '@mui/icons-material/Person';
 import LogoutIcon from '@mui/icons-material/Logout';
+import ImageIcon from '@mui/icons-material/Image';
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 interface LeftSidebarProps {
   onDailyChallenge: () => void;
@@ -19,9 +21,17 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({ onDailyChallenge, name, onLog
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [isOpen, setIsOpen] = useState(false);
+  const navigate = useNavigate();
 
   const toggleSidebar = () => {
     setIsOpen(!isOpen);
+  };
+
+  const handleImageGeneration = () => {
+    navigate('/image-generation');
+    if (isMobile) {
+      setIsOpen(false);
+    }
   };
 
   const sidebarContent = (
@@ -48,7 +58,8 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({ onDailyChallenge, name, onLog
             fontWeight: 500, 
             color: '#222',
             fontSize: { xs: '0.875rem', md: '1rem' },
-            '&:hover': { bgcolor: '#f5f5f5' } 
+            '&:hover': { bgcolor: '#f5f5f5' },
+            py: 1.5
           }} 
           onClick={onDailyChallenge}
         >
@@ -65,10 +76,67 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({ onDailyChallenge, name, onLog
             fontWeight: 500, 
             color: '#222',
             fontSize: { xs: '0.875rem', md: '1rem' },
-            '&:hover': { bgcolor: '#f5f5f5' } 
+            '&:hover': { bgcolor: '#f5f5f5' },
+            py: 1.5
           }}
         >
           All Challenges
+        </Button>
+        <Button 
+          startIcon={<ImageIcon />} 
+          fullWidth 
+          sx={{ 
+            justifyContent: 'flex-start', 
+            mb: 1, 
+            borderRadius: 2, 
+            textTransform: 'none', 
+            fontWeight: 500, 
+            color: '#222',
+            fontSize: { xs: '0.875rem', md: '1rem' },
+            '&:hover': { bgcolor: '#f5f5f5' },
+            py: 1.5,
+            minHeight: 'auto'
+          }}
+          onClick={handleImageGeneration}
+        >
+          <Box sx={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'space-between',
+            width: '100%',
+            gap: 1,
+            flexWrap: 'nowrap'
+          }}>
+            <Typography 
+              variant="body2" 
+              sx={{ 
+                fontWeight: 500,
+                fontSize: { xs: '0.75rem', md: '0.875rem' },
+                color: '#222',
+                lineHeight: 1.1,
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                flexGrow: 1
+              }}
+            >
+              Image Gen Prompts
+            </Typography>
+            <Box component="span" sx={{ 
+              bgcolor: '#9c27b0', 
+              color: '#fff', 
+              borderRadius: 1, 
+              px: 0.75, 
+              py: 0.25,
+              fontSize: { xs: 9, md: 10 },
+              fontWeight: 'bold',
+              letterSpacing: 0.5,
+              flexShrink: 0,
+              minWidth: 'auto'
+            }}>
+              NEW
+            </Box>
+          </Box>
         </Button>
         <Button 
           startIcon={<BoltIcon />} 

@@ -11,6 +11,7 @@ import Layout from './components/Layout';
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
 import ResultsPage from './pages/ResultsPage';
+import ImageGenerationPage from './pages/ImageGenerationPage';
 
 // Theme
 const theme = createTheme({
@@ -86,6 +87,25 @@ function App() {
                                         }
                                         return (
                                             <ResultsPage 
+                                                userId={props.userId} 
+                                                name={props.name} 
+                                                onLogout={props.onLogout} 
+                                            />
+                                        );
+                                    }}
+                                </Layout>
+                            } 
+                        />
+                        <Route 
+                            path="/image-generation" 
+                            element={
+                                <Layout>
+                                    {(props) => {
+                                        if ('onUserLogin' in props) {
+                                            return null; // This shouldn't happen due to redirects
+                                        }
+                                        return (
+                                            <ImageGenerationPage 
                                                 userId={props.userId} 
                                                 name={props.name} 
                                                 onLogout={props.onLogout} 

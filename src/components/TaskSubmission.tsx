@@ -84,11 +84,9 @@ export default function TaskSubmission({
                 onBlur={handleBlur}
                 error={touched && !!error}
                 helperText={
-                    <Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
-                        <span style={{ fontSize: '0.75rem', color: '#666' }}>
-                            {userSolution.length}/5000 total
-                        </span>
-                    </Box>
+                    <span style={{ fontSize: '0.75rem', color: '#666', display: 'flex', justifyContent: 'flex-end' }}>
+                        {userSolution.length}/5000 total
+                    </span>
                 }
                 disabled={isEvaluating}
                 className="solution-input"
