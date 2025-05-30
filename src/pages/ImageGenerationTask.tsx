@@ -46,6 +46,7 @@ interface EvaluationResult {
     analysis?: string;
     score?: number;
     feedback?: string;
+    similarityScore?: number;
     criterionResults?: Array<{
         criterionId: string;
         score: number;
@@ -83,6 +84,7 @@ export default function ImageGenerationTask() {
     const [evaluationResult, setEvaluationResult] = useState<EvaluationResult | null>(null);
     const [isEvaluating, setIsEvaluating] = useState(false);
     const [criteriaData, setCriteriaData] = useState<CriteriaData | null>(null);
+    const [evaluationError, setEvaluationError] = useState<string | null>(null);
 
     useEffect(() => {
         const fetchTaskData = async () => {
@@ -119,8 +121,8 @@ export default function ImageGenerationTask() {
                     return acc;
                 }, {});
                 setCriteriaData(criteriaObj);
-            } catch (error) {
-                console.error('Error fetching criteria:', error);
+            } catch {
+                // Handle errors silently or show user-friendly message
             }
         };
 
@@ -141,19 +143,12 @@ export default function ImageGenerationTask() {
             });
             
             if (response.data.success) {
-                console.log('Image generation successful, setting state...');
                 setGeneratedImageUrl(response.data.imageUrl);
                 setShowComparison(true);
-                
-                console.log('Generated image URL:', response.data.imageUrl);
-                console.log('Task object:', task);
-                console.log('About to call submitPromptForEvaluation...');
                 
                 // Always submit for evaluation after image generation
                 if (task) {
                     submitPromptForEvaluation(response.data.imageUrl);
-                } else {
-                    console.error('Task is null, cannot evaluate');
                 }
             } else {
                 console.error('Image generation failed:', response.data.error);
@@ -168,44 +163,32 @@ export default function ImageGenerationTask() {
     };
 
     const submitPromptForEvaluation = async (imageUrl: string) => {
-        console.log('=== submitPromptForEvaluation called ===');
-        console.log('task:', task);
-        console.log('generatedImageUrl:', imageUrl);
-        
         if (!task || !imageUrl) {
-            console.error('Missing required data:', { task: !!task, generatedImageUrl: !!imageUrl });
             return;
         }
         
         try {
             setIsEvaluating(true);
+            setEvaluationError(null); // Clear any previous errors
             
             // Get the expected image URL
             const expectedImageUrl = getImageUrl(task.Image);
-            console.log('Expected image URL:', expectedImageUrl);
-            console.log('Generated image URL:', imageUrl);
-            console.log('Task ID:', task.id);
-            
             if (!expectedImageUrl) {
-                console.error('No expected image found for comparison');
+                setEvaluationError('No reference image found for this task. Please contact support.');
                 setIsEvaluating(false);
                 return;
             }
 
             // Call the new image evaluation endpoint
-            console.log('Calling image evaluation endpoint...');
             const response = await axios.post(`${API_BASE}/evaluate-images`, {
                 taskId: task.id,
                 userImageUrl: imageUrl,
                 expectedImageUrl: expectedImageUrl
             });
 
-            console.log('Evaluation response:', response.data);
-
             if (response.data.success) {
                 // Process the evaluation result directly
                 const result = response.data.evaluation;
-                console.log('Evaluation result:', result);
                 
                 if (result && result.criteria) {
                     // Convert the result format to match the expected format
@@ -232,31 +215,34 @@ export default function ImageGenerationTask() {
                     const maxPossibleScore = criterionResults.length * 5;
                     const percentageScore = Math.round((totalScore / maxPossibleScore) * 100);
                     
-                    console.log('Processed criterion results:', criterionResults);
-                    console.log('Total score:', totalScore, 'Max possible:', maxPossibleScore, 'Percentage:', percentageScore);
-                    
                     setEvaluationResult({
                         score: percentageScore,
                         totalScore,
                         maxPossibleScore,
+                        similarityScore: result.overallSimilarity || 0,
                         criterionResults,
                         analysis: `Your generated image scored ${percentageScore}% (${totalScore.toFixed(1)}/${maxPossibleScore} points) based on visual comparison with the expected result`,
                         feedback: criterionResults.map(cr => 
                             cr.subquestionResults?.map(sr => sr.feedback).join(' ')
                         ).join(' ')
                     });
-                } else {
-                    console.error('No criteria found in evaluation result');
                 }
-            } else {
-                console.error('Evaluation failed:', response.data);
             }
             
         } catch (error) {
-            console.error('Error evaluating images:', error);
+            console.error('Error evaluating image:', error);
+            
+            // Provide specific error messages based on the error type
             if (axios.isAxiosError(error)) {
-                console.error('Response data:', error.response?.data);
-                console.error('Response status:', error.response?.status);
+                if (error.response?.status === 400) {
+                    setEvaluationError('Unable to access images for comparison. The reference image may not be publicly accessible.');
+                } else if (error.response?.status === 500) {
+                    setEvaluationError('Server error occurred during evaluation. Please try again later.');
+                } else {
+                    setEvaluationError('Network error occurred. Please check your connection and try again.');
+                }
+            } else {
+                setEvaluationError('An unexpected error occurred during evaluation. Please try again.');
             }
         } finally {
             setIsEvaluating(false);
@@ -669,6 +655,20 @@ export default function ImageGenerationTask() {
                                             </Typography>
                                             <LinearProgress sx={{ borderRadius: 1 }} />
                                         </Box>
+                                    ) : evaluationError ? (
+                                        <Box sx={{ 
+                                            p: 2, 
+                                            bgcolor: '#fff3e0', 
+                                            borderRadius: 2,
+                                            border: '1px solid #ff9800'
+                                        }}>
+                                            <Typography variant="body1" color="error" sx={{ fontWeight: 'bold', mb: 1 }}>
+                                                ⚠️ Evaluation Error
+                                            </Typography>
+                                            <Typography variant="body2" color="text.secondary">
+                                                {evaluationError}
+                                            </Typography>
+                                        </Box>
                                     ) : evaluationResult && (
                                         <Box>
                                             <Typography variant="body1" sx={{ mb: 2, lineHeight: 1.6 }}>
@@ -678,13 +678,14 @@ export default function ImageGenerationTask() {
                                             {/* Score Display */}
                                             {evaluationResult.score !== undefined && evaluationResult.totalScore !== undefined && evaluationResult.maxPossibleScore !== undefined && (
                                                 <Box sx={{ mb: 3 }}>
-                                                    <Box sx={{ mb: 2 }}>
+                                                    {/* Criteria-based Score */}
+                                                    <Box sx={{ mb: 3 }}>
                                                         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
                                                             <Typography variant="h6" fontWeight="bold" color="primary">
                                                                 {evaluationResult.score}%
                                                             </Typography>
                                                             <Typography variant="body2" color="text.secondary">
-                                                                Score
+                                                                Criteria Score
                                                             </Typography>
                                                         </Box>
                                                         <LinearProgress 
@@ -702,6 +703,34 @@ export default function ImageGenerationTask() {
                                                             }} 
                                                         />
                                                     </Box>
+
+                                                    {/* Image Similarity Score */}
+                                                    {evaluationResult.similarityScore !== undefined && (
+                                                        <Box sx={{ mb: 3 }}>
+                                                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                                                                <Typography variant="h6" fontWeight="bold" color="secondary">
+                                                                    {Math.round(evaluationResult.similarityScore)}%
+                                                                </Typography>
+                                                                <Typography variant="body2" color="text.secondary">
+                                                                    Image Similarity
+                                                                </Typography>
+                                                            </Box>
+                                                            <LinearProgress 
+                                                                variant="determinate" 
+                                                                value={evaluationResult.similarityScore} 
+                                                                sx={{ 
+                                                                    height: 12, 
+                                                                    borderRadius: 6,
+                                                                    bgcolor: '#f0f0f0',
+                                                                    '& .MuiLinearProgress-bar': {
+                                                                        bgcolor: evaluationResult.similarityScore >= 80 ? '#2196f3' : 
+                                                                                evaluationResult.similarityScore >= 60 ? '#ff9800' : '#f44336',
+                                                                        borderRadius: 6
+                                                                    }
+                                                                }} 
+                                                            />
+                                                        </Box>
+                                                    )}
                                                     
                                                     <Box sx={{ 
                                                         p: 2, 
