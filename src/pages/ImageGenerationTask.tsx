@@ -192,8 +192,14 @@ export default function ImageGenerationTask() {
                 
                 if (result && result.criteria) {
                     // Convert the result format to match the expected format
-                    const criterionResults = Object.entries(result.criteria).map(([criterionId, criterionData]) => {
+                    const rawCriterionResults = Object.entries(result.criteria).map(([criterionId, criterionData]) => {
                         const typedCriterionData = criterionData as { subquestions: Record<string, { score: number; feedback: string }> };
+                        
+                        // Skip if this isn't actually a criterion (e.g., if it's the similarity score)
+                        if (!typedCriterionData.subquestions) {
+                            return null;
+                        }
+                        
                         return {
                             criterionId,
                             score: 0, // Will be calculated from subquestions
@@ -204,6 +210,9 @@ export default function ImageGenerationTask() {
                             }))
                         };
                     });
+
+                    // Filter out null entries and ensure proper typing
+                    const criterionResults = rawCriterionResults.filter((result): result is NonNullable<typeof result> => result !== null);
 
                     // Calculate criterion scores as average of subquestion scores
                     criterionResults.forEach(criterion => {
