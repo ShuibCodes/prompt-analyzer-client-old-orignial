@@ -151,7 +151,7 @@ export default function ImageGenerationTask() {
                 
                 // Always submit for evaluation after image generation
                 if (task) {
-                    submitPromptForEvaluation();
+                    submitPromptForEvaluation(response.data.imageUrl);
                 } else {
                     console.error('Task is null, cannot evaluate');
                 }
@@ -167,13 +167,13 @@ export default function ImageGenerationTask() {
         }
     };
 
-    const submitPromptForEvaluation = async () => {
+    const submitPromptForEvaluation = async (imageUrl: string) => {
         console.log('=== submitPromptForEvaluation called ===');
         console.log('task:', task);
-        console.log('generatedImageUrl:', generatedImageUrl);
+        console.log('generatedImageUrl:', imageUrl);
         
-        if (!task || !generatedImageUrl) {
-            console.error('Missing required data:', { task: !!task, generatedImageUrl: !!generatedImageUrl });
+        if (!task || !imageUrl) {
+            console.error('Missing required data:', { task: !!task, generatedImageUrl: !!imageUrl });
             return;
         }
         
@@ -183,7 +183,7 @@ export default function ImageGenerationTask() {
             // Get the expected image URL
             const expectedImageUrl = getImageUrl(task.Image);
             console.log('Expected image URL:', expectedImageUrl);
-            console.log('Generated image URL:', generatedImageUrl);
+            console.log('Generated image URL:', imageUrl);
             console.log('Task ID:', task.id);
             
             if (!expectedImageUrl) {
@@ -196,7 +196,7 @@ export default function ImageGenerationTask() {
             console.log('Calling image evaluation endpoint...');
             const response = await axios.post(`${API_BASE}/evaluate-images`, {
                 taskId: task.id,
-                userImageUrl: generatedImageUrl,
+                userImageUrl: imageUrl,
                 expectedImageUrl: expectedImageUrl
             });
 
