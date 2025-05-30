@@ -189,9 +189,6 @@ export default function ImageGenerationTask() {
             if (response.data.success) {
                 // Process the evaluation result directly
                 const result = response.data.evaluation;
-                console.log('Full evaluation result:', JSON.stringify(result, null, 2));
-                console.log('result.overallSimilarity:', result.overallSimilarity);
-                console.log('result.criteria keys:', result.criteria ? Object.keys(result.criteria) : 'no criteria');
                 
                 if (result && result.criteria) {
                     // Convert the result format to match the expected format
@@ -237,17 +234,14 @@ export default function ImageGenerationTask() {
                             similarityScore = result.criteria.overallSimilarity;
                         } else {
                             // Search through all criteria keys for a number value that might be similarity
-                            for (const [key, value] of Object.entries(result.criteria)) {
+                            for (const [, value] of Object.entries(result.criteria)) {
                                 if (typeof value === 'number' && value >= 0 && value <= 100) {
-                                    console.log('Found potential similarity score:', key, value);
                                     similarityScore = value;
                                     break;
                                 }
                             }
                         }
                     }
-                    
-                    console.log('Final similarity score:', similarityScore);
                     
                     setEvaluationResult({
                         score: percentageScore,
