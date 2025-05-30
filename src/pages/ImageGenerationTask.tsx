@@ -15,8 +15,8 @@ import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
 import CompareIcon from '@mui/icons-material/Compare';
 import axios from 'axios';
 
-const API_BASE = 'https://prompt-pal-api.onrender.com/api/analyzer';
-// const API_BASE = 'http://localhost:1337/api/analyzer';
+// const API_BASE = 'https://prompt-pal-api.onrender.com/api/analyzer';
+const API_BASE = 'http://localhost:1337/api/analyzer';
 
 interface ImageTask {
     id: string;
@@ -141,12 +141,19 @@ export default function ImageGenerationTask() {
             });
             
             if (response.data.success) {
+                console.log('Image generation successful, setting state...');
                 setGeneratedImageUrl(response.data.imageUrl);
                 setShowComparison(true);
+                
+                console.log('Generated image URL:', response.data.imageUrl);
+                console.log('Task object:', task);
+                console.log('About to call submitPromptForEvaluation...');
                 
                 // Always submit for evaluation after image generation
                 if (task) {
                     submitPromptForEvaluation();
+                } else {
+                    console.error('Task is null, cannot evaluate');
                 }
             } else {
                 console.error('Image generation failed:', response.data.error);
@@ -161,7 +168,14 @@ export default function ImageGenerationTask() {
     };
 
     const submitPromptForEvaluation = async () => {
-        if (!task || !generatedImageUrl) return;
+        console.log('=== submitPromptForEvaluation called ===');
+        console.log('task:', task);
+        console.log('generatedImageUrl:', generatedImageUrl);
+        
+        if (!task || !generatedImageUrl) {
+            console.error('Missing required data:', { task: !!task, generatedImageUrl: !!generatedImageUrl });
+            return;
+        }
         
         try {
             setIsEvaluating(true);
