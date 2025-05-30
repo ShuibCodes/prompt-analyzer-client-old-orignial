@@ -62,7 +62,7 @@ export default function TaskSubmission({
                         severity="error" 
                         sx={{ 
                             mb: 2, 
-                            borderRadius: 2,
+                            borderRadius: 1,
                             '& .MuiAlert-message': {
                                 fontSize: '0.9rem',
                             }
@@ -107,7 +107,7 @@ export default function TaskSubmission({
                 sx={{ 
                     mt: 2, 
                     fontWeight: 700, 
-                    borderRadius: 3, 
+                    borderRadius: 1, 
                     py: 1.2, 
                     fontSize: '1.1rem', 
                     boxShadow: '0 2px 8px #ffe08288',

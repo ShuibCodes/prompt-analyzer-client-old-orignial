@@ -175,7 +175,7 @@ export default function ImageGenerationDashboard() {
                             <Card 
                                 sx={{ 
                                     height: '100%',
-                                    borderRadius: 3,
+                                    borderRadius: 2,
                                     transition: 'all 0.3s ease',
                                     border: '1px solid #e2e8f0',
                                     '&:hover': {
@@ -209,7 +209,6 @@ export default function ImageGenerationDashboard() {
                                     {getImageUrl(task.Image) && (
                                         <Box sx={{ 
                                             mb: 2,
-                                            borderRadius: 2,
                                             overflow: 'hidden',
                                             border: '1px solid #e2e8f0'
                                         }}>
@@ -228,7 +227,7 @@ export default function ImageGenerationDashboard() {
                                     <Box sx={{ 
                                         bgcolor: '#f7fafc', 
                                         p: 2, 
-                                        borderRadius: 2,
+                                      
                                         border: '1px solid #e2e8f0'
                                     }}>
                                         <Typography 
@@ -261,7 +260,7 @@ export default function ImageGenerationDashboard() {
                                         fullWidth
                                         onClick={() => handleTaskSelect(task.id)}
                                         sx={{ 
-                                            borderRadius: 2,
+                                            borderRadius: 1,
                                             textTransform: 'none',
                                             fontWeight: 'bold',
                                             py: 1.5

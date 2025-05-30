@@ -59,7 +59,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({ name, onLogout }) => {
           sx={{ 
             justifyContent: 'flex-start', 
             mb: 1, 
-            borderRadius: 2, 
+            borderRadius: 1, 
             textTransform: 'none', 
             fontWeight: 500, 
             color: '#222',
@@ -77,7 +77,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({ name, onLogout }) => {
           sx={{ 
             justifyContent: 'flex-start', 
             mb: 1, 
-            borderRadius: 2, 
+            borderRadius: 1, 
             textTransform: 'none', 
             fontWeight: 500, 
             color: '#222',
@@ -94,7 +94,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({ name, onLogout }) => {
           sx={{ 
             justifyContent: 'flex-start', 
             mb: 1, 
-            borderRadius: 2, 
+            borderRadius: 1, 
             textTransform: 'none', 
             fontWeight: 500, 
             color: '#222',
@@ -150,7 +150,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({ name, onLogout }) => {
           sx={{ 
             justifyContent: 'flex-start', 
             mb: 1, 
-            borderRadius: 2, 
+            borderRadius: 1, 
             textTransform: 'none', 
             fontWeight: 500, 
             color: '#222',
@@ -176,7 +176,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({ name, onLogout }) => {
           sx={{ 
             justifyContent: 'flex-start', 
             mb: 1, 
-            borderRadius: 2, 
+            borderRadius: 1, 
             textTransform: 'none', 
             fontWeight: 500, 
             color: '#222',
@@ -202,7 +202,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({ name, onLogout }) => {
           sx={{ 
             justifyContent: 'flex-start', 
             mb: 1, 
-            borderRadius: 2, 
+            borderRadius: 1, 
             textTransform: 'none', 
             fontWeight: 500, 
             color: '#222',
@@ -225,7 +225,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({ name, onLogout }) => {
       </Box>
       <Paper elevation={2} sx={{ 
         bgcolor: '#f5faff', 
-        borderRadius: 3, 
+        borderRadius: 1, 
         p: { xs: 1.5, md: 2 }, 
         mb: 2, 
         mx: { xs: 1, md: 2 } 
@@ -238,7 +238,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({ name, onLogout }) => {
         <Box sx={{ 
           bgcolor: '#e3f2fd', 
           color: '#1976d2', 
-          borderRadius: 2, 
+          borderRadius: 1, 
           p: 1, 
           mt: 1, 
           mb: 1, 
@@ -251,7 +251,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({ name, onLogout }) => {
         <Box sx={{ 
           bgcolor: '#fff8e1', 
           color: '#ffb300', 
-          borderRadius: 2, 
+          borderRadius: 1, 
           p: 1, 
           textAlign: 'center', 
           fontWeight: 600, 
@@ -262,7 +262,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({ name, onLogout }) => {
       </Paper>
       <Paper elevation={2} sx={{ 
         bgcolor: '#fffbe7', 
-        borderRadius: 3, 
+        borderRadius: 1, 
         p: { xs: 1.5, md: 2 }, 
         mb: 2, 
         mx: { xs: 1, md: 2 }, 
@@ -279,7 +279,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({ name, onLogout }) => {
           fullWidth 
           sx={{ 
             mt: 1, 
-            borderRadius: 2, 
+            borderRadius: 1, 
             fontWeight: 700,
             fontSize: { xs: '0.875rem', md: '1rem' }
           }}

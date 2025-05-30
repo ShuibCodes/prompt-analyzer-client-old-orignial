@@ -177,7 +177,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSubmit, onSkip, isLoading = fal
             sx={{ 
               flex: 1, 
               fontWeight: 700, 
-              borderRadius: 3, 
+              borderRadius: 1, 
               py: 1.2, 
               fontSize: '1.1rem', 
               boxShadow: '0 2px 8px #ffe08288',
@@ -197,7 +197,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSubmit, onSkip, isLoading = fal
             sx={{ 
               flex: 1, 
               fontWeight: 700, 
-              borderRadius: 3, 
+              borderRadius: 1, 
               py: 1.2, 
               fontSize: '1.1rem', 
               borderWidth: 2,

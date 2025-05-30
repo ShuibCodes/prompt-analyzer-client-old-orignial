@@ -22,7 +22,7 @@ const RightSidebar: React.FC = () => {
                 <Paper elevation={2} sx={{ 
                     p: { xs: 1.5, md: 2 }, 
                     mb: { xs: 2, md: 3 }, 
-                    borderRadius: 3, 
+                    borderRadius: 1, 
                     bgcolor: '#f5faff' 
                 }}>
                     <Typography variant="subtitle1" fontWeight="bold" sx={{ 
@@ -41,7 +41,7 @@ const RightSidebar: React.FC = () => {
                 </Paper>
                 <Paper elevation={2} sx={{ 
                     p: { xs: 1.5, md: 2 }, 
-                    borderRadius: 3, 
+                    borderRadius: 1, 
                     bgcolor: '#fffbe7' 
                 }}>
                     <Typography variant="body2" fontWeight="bold" sx={{ 
