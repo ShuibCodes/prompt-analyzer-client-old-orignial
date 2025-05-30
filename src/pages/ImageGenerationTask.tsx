@@ -15,8 +15,8 @@ import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
 import CompareIcon from '@mui/icons-material/Compare';
 import axios from 'axios';
 
-const API_BASE = 'https://prompt-pal-api.onrender.com/api/analyzer';
-// const API_BASE = 'http://localhost:1337/api/analyzer';
+// const API_BASE = 'https://prompt-pal-api.onrender.com/api/analyzer';
+const API_BASE = 'http://localhost:1337/api/analyzer';
 
 interface ImageTask {
     id: string;
@@ -59,16 +59,6 @@ interface EvaluationResult {
     maxPossibleScore?: number;
 }
 
-interface TaskResult {
-    taskId: string;
-    criterionResults: Array<{
-        score: number;
-        subquestionResults: Array<{
-            feedback: string;
-        }>;
-    }>;
-}
-
 interface CriteriaData {
     [key: string]: {
         id: string;
@@ -93,20 +83,6 @@ export default function ImageGenerationTask() {
     const [evaluationResult, setEvaluationResult] = useState<EvaluationResult | null>(null);
     const [isEvaluating, setIsEvaluating] = useState(false);
     const [criteriaData, setCriteriaData] = useState<CriteriaData | null>(null);
-
-    const getStoredUserId = () => {
-        try {
-            const stored = localStorage.getItem('promptPalAuth');
-            if (!stored) return null;
-            const authData = JSON.parse(stored);
-            return authData.userId;
-        } catch (error) {
-            console.error('Error reading userId:', error);
-            return null;
-        }
-    };
-
-    const userId = getStoredUserId();
 
     useEffect(() => {
         const fetchTaskData = async () => {
@@ -168,7 +144,8 @@ export default function ImageGenerationTask() {
                 setGeneratedImageUrl(response.data.imageUrl);
                 setShowComparison(true);
                 
-                if (userId && task) {
+                // Always submit for evaluation after image generation
+                if (task) {
                     submitPromptForEvaluation();
                 }
             } else {
@@ -184,71 +161,92 @@ export default function ImageGenerationTask() {
     };
 
     const submitPromptForEvaluation = async () => {
-        if (!userId || !task) return;
+        if (!task || !generatedImageUrl) return;
         
         try {
             setIsEvaluating(true);
             
-            await axios.post(`${API_BASE}/users/${userId}/submissions`, {
-                taskId: task.id,
-                solutionPrompt: userPrompt
-            });
+            // Get the expected image URL
+            const expectedImageUrl = getImageUrl(task.Image);
+            console.log('Expected image URL:', expectedImageUrl);
+            console.log('Generated image URL:', generatedImageUrl);
+            console.log('Task ID:', task.id);
             
-            pollForResults();
-            
-        } catch (error) {
-            console.error('Error submitting prompt:', error);
-            setIsEvaluating(false);
-        }
-    };
+            if (!expectedImageUrl) {
+                console.error('No expected image found for comparison');
+                setIsEvaluating(false);
+                return;
+            }
 
-    const pollForResults = async () => {
-        let attempts = 0;
-        const maxAttempts = 15;
-        
-        const poll = async () => {
-            try {
-                const resultsResponse = await axios.get(`${API_BASE}/users/${userId}/results`);
-                const taskResults = resultsResponse.data.taskResults || [];
+            // Call the new image evaluation endpoint
+            console.log('Calling image evaluation endpoint...');
+            const response = await axios.post(`${API_BASE}/evaluate-images`, {
+                taskId: task.id,
+                userImageUrl: generatedImageUrl,
+                expectedImageUrl: expectedImageUrl
+            });
+
+            console.log('Evaluation response:', response.data);
+
+            if (response.data.success) {
+                // Process the evaluation result directly
+                const result = response.data.evaluation;
+                console.log('Evaluation result:', result);
                 
-                const taskResult = taskResults.find((result: TaskResult) => result.taskId === task?.id);
-                
-                if (taskResult && taskResult.criterionResults?.length > 0) {
-                    const totalScore = taskResult.criterionResults.reduce(
-                        (sum: number, criterion: { score: number }) => sum + criterion.score, 0
-                    );
-                    const maxPossibleScore = taskResult.criterionResults.length * 5;
+                if (result && result.criteria) {
+                    // Convert the result format to match the expected format
+                    const criterionResults = Object.entries(result.criteria).map(([criterionId, criterionData]) => {
+                        const typedCriterionData = criterionData as { subquestions: Record<string, { score: number; feedback: string }> };
+                        return {
+                            criterionId,
+                            score: 0, // Will be calculated from subquestions
+                            subquestionResults: Object.entries(typedCriterionData.subquestions).map(([subquestionId, subData]) => ({
+                                subquestionId,
+                                score: Math.max(1, Math.min(subData.score || 1, 5)), // Clamp score to [1, 5]
+                                feedback: subData.feedback || 'No feedback provided'
+                            }))
+                        };
+                    });
+
+                    // Calculate criterion scores as average of subquestion scores
+                    criterionResults.forEach(criterion => {
+                        const avgScore = criterion.subquestionResults.reduce((sum, sub) => sum + sub.score, 0) / criterion.subquestionResults.length;
+                        criterion.score = avgScore;
+                    });
+
+                    const totalScore = criterionResults.reduce((sum, criterion) => sum + criterion.score, 0);
+                    const maxPossibleScore = criterionResults.length * 5;
                     const percentageScore = Math.round((totalScore / maxPossibleScore) * 100);
+                    
+                    console.log('Processed criterion results:', criterionResults);
+                    console.log('Total score:', totalScore, 'Max possible:', maxPossibleScore, 'Percentage:', percentageScore);
                     
                     setEvaluationResult({
                         score: percentageScore,
                         totalScore,
                         maxPossibleScore,
-                        criterionResults: taskResult.criterionResults,
-                        analysis: `Your prompt scored ${percentageScore}% (${totalScore}/${maxPossibleScore} points) based on ${taskResult.criterionResults.length} criteria`,
-                        feedback: taskResult.criterionResults.map((cr: { subquestionResults: Array<{ feedback: string }> }) => 
-                            cr.subquestionResults?.map((sr: { feedback: string }) => sr.feedback).join(' ')
+                        criterionResults,
+                        analysis: `Your generated image scored ${percentageScore}% (${totalScore.toFixed(1)}/${maxPossibleScore} points) based on visual comparison with the expected result`,
+                        feedback: criterionResults.map(cr => 
+                            cr.subquestionResults?.map(sr => sr.feedback).join(' ')
                         ).join(' ')
                     });
-                    
-                    setIsEvaluating(false);
-                    return;
-                }
-                
-                attempts++;
-                if (attempts < maxAttempts) {
-                    setTimeout(poll, 2000);
                 } else {
-                    console.log('Polling timeout - no results received');
-                    setIsEvaluating(false);
+                    console.error('No criteria found in evaluation result');
                 }
-            } catch (error) {
-                console.error('Error polling results:', error);
-                setIsEvaluating(false);
+            } else {
+                console.error('Evaluation failed:', response.data);
             }
-        };
-        
-        poll();
+            
+        } catch (error) {
+            console.error('Error evaluating images:', error);
+            if (axios.isAxiosError(error)) {
+                console.error('Response data:', error.response?.data);
+                console.error('Response status:', error.response?.status);
+            }
+        } finally {
+            setIsEvaluating(false);
+        }
     };
 
     const getImageUrl = (imageArray: Array<{ 
@@ -517,7 +515,7 @@ export default function ImageGenerationTask() {
                                         fontSize: { xs: '0.85rem', md: '0.9rem' }
                                     }}
                                 >
-                                    Creating your image and expert comparison...
+                                    Creating your image and comparing it with the expected result...
                                 </Typography>
                             </Box>
                         )}
@@ -647,13 +645,13 @@ export default function ImageGenerationTask() {
                                             color: '#1a202c'
                                         }}
                                     >
-                                        📊 Prompt Evaluation
+                                        📊 Image Similarity Evaluation
                                     </Typography>
                                     
                                     {isEvaluating ? (
                                         <Box>
                                             <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                                                Analyzing your prompt...
+                                                Analyzing how well your generated image matches the expected result...
                                             </Typography>
                                             <LinearProgress sx={{ borderRadius: 1 }} />
                                         </Box>
