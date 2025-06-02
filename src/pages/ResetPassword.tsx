@@ -14,8 +14,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
-
-const API_BASE = 'http://localhost:1337/api';
+import { API_BASE } from '../config';
 
 export default function ResetPassword() {
     const [searchParams] = useSearchParams();
