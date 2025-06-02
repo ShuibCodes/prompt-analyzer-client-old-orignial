@@ -59,8 +59,15 @@ export default function ResetPassword() {
             
             setSuccess(true);
         } catch (error) {
-            if (axios.isAxiosError(error) && error.response?.data?.error?.message) {
-                setError(error.response.data.error.message);
+            if (axios.isAxiosError(error)) {
+                console.error('Full error response:', error.response?.data);
+                if (error.response?.data?.error?.message) {
+                    setError(error.response.data.error.message);
+                } else if (error.response?.data?.message) {
+                    setError(error.response.data.message);
+                } else {
+                    setError('An error occurred while resetting the password. Please try again.');
+                }
             } else {
                 setError('An error occurred. Please try again.');
             }
