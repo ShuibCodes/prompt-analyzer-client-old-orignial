@@ -15,8 +15,8 @@ import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
 import CompareIcon from '@mui/icons-material/Compare';
 import axios from 'axios';
 
-const API_BASE = 'https://prompt-pal-api.onrender.com/api/analyzer';
-// const API_BASE = 'http://localhost:1337/api/analyzer';
+// const API_BASE = 'https://prompt-pal-api.onrender.com/api/analyzer';
+const API_BASE = 'http://localhost:1337/api/analyzer';
 
 interface ImageTask {
     id: string;
@@ -85,6 +85,7 @@ export default function ImageGenerationTask() {
     const [isEvaluating, setIsEvaluating] = useState(false);
     const [criteriaData, setCriteriaData] = useState<CriteriaData | null>(null);
     const [evaluationError, setEvaluationError] = useState<string | null>(null);
+    const MAX_PROMPT_LENGTH = 1000; // OpenAI's maximum prompt length
 
     useEffect(() => {
         const fetchTaskData = async () => {
@@ -132,6 +133,11 @@ export default function ImageGenerationTask() {
 
     const handleGenerateImage = async () => {
         if (!userPrompt.trim()) return;
+        
+        if (userPrompt.length > MAX_PROMPT_LENGTH) {
+            alert(`Prompt is too long. Maximum length is ${MAX_PROMPT_LENGTH} characters.`);
+            return;
+        }
         
         setIsGenerating(true);
         setGeneratedImageUrl(null);
@@ -500,6 +506,8 @@ export default function ImageGenerationTask() {
                             placeholder="Write your DALL-E prompt here... Be specific about style, composition, lighting, and details!"
                             value={userPrompt}
                             onChange={(e) => setUserPrompt(e.target.value)}
+                            error={userPrompt.length > MAX_PROMPT_LENGTH}
+                            helperText={`${userPrompt.length}/${MAX_PROMPT_LENGTH} characters`}
                             sx={{ 
                                 mb: 2,
                                 '& .MuiOutlinedInput-root': {
@@ -513,7 +521,7 @@ export default function ImageGenerationTask() {
                                 variant="contained"
                                 size="large"
                                 onClick={handleGenerateImage}
-                                disabled={!userPrompt.trim() || isGenerating}
+                                disabled={!userPrompt.trim() || isGenerating || userPrompt.length > MAX_PROMPT_LENGTH}
                                 sx={{ 
                                     borderRadius: 2,
                                     px: 4,
@@ -526,10 +534,10 @@ export default function ImageGenerationTask() {
                             </Button>
                             <Typography 
                                 variant="body2" 
-                                color="text.secondary"
+                                color={userPrompt.length > MAX_PROMPT_LENGTH ? "error" : "text.secondary"}
                                 sx={{ fontSize: { xs: '0.8rem', md: '0.875rem' } }}
                             >
-                                {userPrompt.length}/500 characters
+                                {userPrompt.length}/{MAX_PROMPT_LENGTH} characters
                             </Typography>
                         </Box>
                         {isGenerating && (

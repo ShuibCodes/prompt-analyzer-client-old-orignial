@@ -26,15 +26,31 @@ const FinalResults: React.FC<FinalResultsProps> = ({
   const finalScore = resultsData?.score ?? 0;
   const scoreColor = finalScore >= 4 ? '#43a047' : finalScore >= 2.5 ? '#ffa000' : '#e53935';
   const [currentTaskPage, setCurrentTaskPage] = useState(1);
-  const tasks = resultsData.taskResults || [];
+  const tasks = resultsData?.taskResults || [];
   const currentTask = tasks[currentTaskPage - 1];
   const handlePageChange = (_: React.ChangeEvent<unknown>, value: number) => setCurrentTaskPage(value);
 
   // Add criterion names to the results
-  const criterionResultsWithNames = currentTask?.criterionResults.map(criterion => ({
+  const criterionResultsWithNames = currentTask?.criterionResults?.map(criterion => ({
     ...criterion,
     name: criteriaData?.[criterion.criterionId]?.name || criterion.criterionId
   })) || [];
+
+  // Get task name safely
+  const getTaskName = (taskId: string) => {
+    if (!taskId || !tasksMap) return 'Unknown Task';
+    return tasksMap[taskId]?.name || taskId;
+  };
+
+  if (!resultsData || !tasks.length) {
+    return (
+      <Box sx={{ p: 4, textAlign: 'center' }}>
+        <Typography variant="h6" color="text.secondary">
+          No results available yet. Please complete some tasks first.
+        </Typography>
+      </Box>
+    );
+  }
 
   return (
     <Paper elevation={4} sx={{ p: 4, borderRadius: 4, bgcolor: '#f5faff', boxShadow: 3 }}>
@@ -97,15 +113,15 @@ const FinalResults: React.FC<FinalResultsProps> = ({
             <Paper elevation={2} sx={{ p: 3, borderRadius: 3, mb: 2, bgcolor: '#fff' }}>
               <Typography variant="h6" sx={{ mb: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
                 <EmojiEventsIcon sx={{ color: '#1976d2' }} />
-                Task: {tasksMap ? tasksMap[currentTask.taskId].name : currentTask.taskId}
+                Task: {getTaskName(currentTask.taskId)}
               </Typography>
-              {currentTask.criterionResults.map(criterion => (
+              {currentTask.criterionResults?.map(criterion => (
                 <Box key={criterion.criterionId} mt={1} sx={{ pl: 2 }}>
                   <Typography fontWeight="bold" sx={{ color: '#1976d2' }}>
-                    {!criteriaData ? criterion.criterionId : criteriaData[criterion.criterionId].name}
+                    {criteriaData?.[criterion.criterionId]?.name || criterion.criterionId}
                     <span style={{ marginLeft: 8, color: '#888', fontWeight: 400 }}>Score: {criterion.score}</span>
                   </Typography>
-                  {criterion.subquestionResults.map(sub => (
+                  {criterion.subquestionResults?.map(sub => (
                     <Typography key={sub.subquestionId} sx={{ pl: 2, color: '#555' }}>
                       - {sub.feedback} <span style={{ color: '#888' }}>(Score: {sub.score})</span>
                     </Typography>

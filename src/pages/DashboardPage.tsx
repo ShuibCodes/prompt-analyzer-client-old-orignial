@@ -34,8 +34,8 @@ interface TaskResult {
     criterionResults: CriterionResult[];
 }
 
- const API_BASE = 'https://prompt-pal-api.onrender.com/api/analyzer';
-// const API_BASE = 'http://localhost:1337/api/analyzer';
+// const API_BASE = 'https://prompt-pal-api.onrender.com/api/analyzer';
+const API_BASE = 'http://localhost:1337/api/analyzer';
 
 interface DashboardPageProps {
     userId: string;

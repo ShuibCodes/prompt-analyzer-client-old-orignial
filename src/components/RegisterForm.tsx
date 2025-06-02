@@ -5,34 +5,47 @@ import ErrorIcon from '@mui/icons-material/Error';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 
-interface LoginFormProps {
-  onSubmit: (data: { identifier: string; password: string }) => void;
-  onRegisterClick: () => void;
+interface RegisterFormProps {
+  onSubmit: (data: { email: string; password: string; username: string }) => void;
+  onLoginClick: () => void;
   isLoading?: boolean;
   error?: string | null;
 }
 
 interface FormErrors {
-  identifier?: string;
+  username?: string;
+  email?: string;
   password?: string;
 }
 
-const LoginForm: React.FC<LoginFormProps> = ({ onSubmit, onRegisterClick, isLoading = false, error = null }) => {
-  const [identifier, setIdentifier] = useState('');
+const RegisterForm: React.FC<RegisterFormProps> = ({ onSubmit, onLoginClick, isLoading = false, error = null }) => {
+  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
-  const [touched, setTouched] = useState<{ identifier: boolean; password: boolean }>({
-    identifier: false,
+  const [touched, setTouched] = useState<{ username: boolean; email: boolean; password: boolean }>({
+    username: false,
+    email: false,
     password: false,
   });
 
-  const validateIdentifier = (identifier: string): string | undefined => {
-    if (!identifier.trim()) {
+  const validateUsername = (username: string): string | undefined => {
+    if (!username.trim()) {
+      return 'Username is required';
+    }
+    if (username.trim().length < 3) {
+      return 'Username must be at least 3 characters long';
+    }
+    return undefined;
+  };
+
+  const validateEmail = (email: string): string | undefined => {
+    if (!email.trim()) {
       return 'Email is required';
     }
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(identifier)) {
+    if (!emailRegex.test(email)) {
       return 'Please enter a valid email address';
     }
     return undefined;
@@ -49,73 +62,75 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSubmit, onRegisterClick, isLoad
   };
 
   const validateForm = (): boolean => {
-    const identifierError = validateIdentifier(identifier);
+    const usernameError = validateUsername(username);
+    const emailError = validateEmail(email);
     const passwordError = validatePassword(password);
     
     setErrors({
-      identifier: identifierError,
+      username: usernameError,
+      email: emailError,
       password: passwordError,
     });
 
-    return !identifierError && !passwordError;
+    return !usernameError && !emailError && !passwordError;
   };
 
-  const handleIdentifierChange = (value: string) => {
-    setIdentifier(value);
-    if (touched.identifier) {
+  const handleFieldChange = (field: keyof FormErrors, value: string) => {
+    switch (field) {
+      case 'username':
+        setUsername(value);
+        break;
+      case 'email':
+        setEmail(value);
+        break;
+      case 'password':
+        setPassword(value);
+        break;
+    }
+
+    if (touched[field]) {
       setErrors(prev => ({
         ...prev,
-        identifier: validateIdentifier(value),
+        [field]: field === 'username' ? validateUsername(value) :
+                field === 'email' ? validateEmail(value) :
+                validatePassword(value),
       }));
     }
   };
 
-  const handlePasswordChange = (value: string) => {
-    setPassword(value);
-    if (touched.password) {
-      setErrors(prev => ({
-        ...prev,
-        password: validatePassword(value),
-      }));
+  const handleFieldBlur = (field: keyof FormErrors) => {
+    setTouched(prev => ({ ...prev, [field]: true }));
+    setErrors(prev => ({
+      ...prev,
+      [field]: field === 'username' ? validateUsername(username) :
+              field === 'email' ? validateEmail(email) :
+              validatePassword(password),
+    }));
+  };
+
+  const handleSubmit = () => {
+    setTouched({ username: true, email: true, password: true });
+    if (validateForm()) {
+      onSubmit({ 
+        username: username.trim(), 
+        email: email.trim(), 
+        password: password.trim()
+      });
     }
-  };
-
-  const handleIdentifierBlur = () => {
-    setTouched(prev => ({ ...prev, identifier: true }));
-    setErrors(prev => ({
-      ...prev,
-      identifier: validateIdentifier(identifier),
-    }));
-  };
-
-  const handlePasswordBlur = () => {
-    setTouched(prev => ({ ...prev, password: true }));
-    setErrors(prev => ({
-      ...prev,
-      password: validatePassword(password),
-    }));
   };
 
   const handleClickShowPassword = () => {
     setShowPassword(!showPassword);
   };
 
-  const handleSubmit = () => {
-    setTouched({ identifier: true, password: true });
-    if (validateForm()) {
-      onSubmit({ identifier: identifier.trim(), password: password.trim() });
-    }
-  };
-
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: '#f4f6fa', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <Paper elevation={4} sx={{ p: 5, borderRadius: 4, minWidth: 350, maxWidth: 400, width: '100%', boxShadow: 3 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3, justifyContent: 'center' }}>
-          {/* You can add a logo/icon here if desired */}
           <Typography variant="h4" fontWeight="bold" sx={{ color: '#ff6600', letterSpacing: 1 }}>Prompt Pal</Typography>
         </Box>
         <Typography variant="h6" gutterBottom align="center" sx={{ mb: 2, fontWeight: 700 }}>
-          Welcome back! Please login:
+          Create your account:
         </Typography>
 
         {error && (
@@ -137,14 +152,32 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSubmit, onRegisterClick, isLoad
         )}
 
         <TextField 
+          label="Username" 
+          fullWidth 
+          margin="normal" 
+          value={username} 
+          onChange={(e) => handleFieldChange('username', e.target.value)}
+          onBlur={() => handleFieldBlur('username')}
+          error={touched.username && !!errors.username}
+          helperText={touched.username && errors.username}
+          disabled={isLoading}
+          sx={{ 
+            mb: 2,
+            '& .MuiFormHelperText-root.Mui-error': {
+              fontSize: '0.8rem',
+              marginLeft: 0,
+            }
+          }}
+        />
+        <TextField 
           label="Email" 
           fullWidth 
           margin="normal" 
-          value={identifier} 
-          onChange={(e) => handleIdentifierChange(e.target.value)}
-          onBlur={handleIdentifierBlur}
-          error={touched.identifier && !!errors.identifier}
-          helperText={touched.identifier && errors.identifier}
+          value={email} 
+          onChange={(e) => handleFieldChange('email', e.target.value)}
+          onBlur={() => handleFieldBlur('email')}
+          error={touched.email && !!errors.email}
+          helperText={touched.email && errors.email}
           disabled={isLoading}
           sx={{ 
             mb: 2,
@@ -160,8 +193,8 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSubmit, onRegisterClick, isLoad
           fullWidth 
           margin="normal" 
           value={password} 
-          onChange={(e) => handlePasswordChange(e.target.value)}
-          onBlur={handlePasswordBlur}
+          onChange={(e) => handleFieldChange('password', e.target.value)}
+          onBlur={() => handleFieldBlur('password')}
           error={touched.password && !!errors.password}
           helperText={touched.password && errors.password}
           disabled={isLoading}
@@ -191,7 +224,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSubmit, onRegisterClick, isLoad
             variant="contained" 
             color="warning"
             onClick={handleSubmit}
-            disabled={isLoading || !identifier.trim() || !password.trim()}
+            disabled={isLoading || !username.trim() || !email.trim() || !password.trim()}
             sx={{ 
               flex: 1, 
               fontWeight: 700, 
@@ -205,12 +238,12 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSubmit, onRegisterClick, isLoad
             }}
             startIcon={isLoading ? undefined : <EmojiEventsIcon />}
           >
-            {isLoading ? 'Logging in...' : 'Login'}
+            {isLoading ? 'Creating...' : 'Register'}
           </Button>
           <Button 
             variant="outlined" 
             color="warning"
-            onClick={onRegisterClick}
+            onClick={onLoginClick}
             disabled={isLoading}
             sx={{ 
               flex: 1, 
@@ -224,7 +257,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSubmit, onRegisterClick, isLoad
               }
             }}
           >
-            Register
+            Login
           </Button>
         </Box>
       </Paper>
@@ -232,4 +265,4 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSubmit, onRegisterClick, isLoad
   );
 };
 
-export default LoginForm; 
+export default RegisterForm; 

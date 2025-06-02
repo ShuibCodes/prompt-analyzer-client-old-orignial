@@ -3,14 +3,13 @@ import axios from 'axios';
 import { toast } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
 import Box from '@mui/material/Box';
-import { Paper } from '@mui/material';
+import { Paper, CircularProgress, Typography } from '@mui/material';
 import RightSidebar from '../components/RightSidebar';
 import FinalResults from '../components/FinalResults';
 import { convertArrayToObject } from '../utils';
 import type { TaskData, CriteriaData, ResultsData } from '../types';
 
-const API_BASE = 'https://prompt-pal-api.onrender.com/api/analyzer';
-//const API_BASE = 'http://localhost:1337/api/analyzer';
+const API_BASE = 'http://localhost:1337/api/analyzer';
 
 interface ResultsPageProps {
     userId: string;
@@ -23,18 +22,24 @@ export default function ResultsPage({ userId }: ResultsPageProps) {
         queryKey: ['tasks', userId],
         queryFn: () => axios.get(`${API_BASE}/users/${userId}/tasks`).then((res) => res.data.data),
         enabled: !!userId,
+        retry: 3,
+        retryDelay: 1000,
     });
 
     const criteriaQuery = useQuery({
         queryKey: ['criteria'],
         queryFn: () => axios.get(`${API_BASE}/criteria`).then((res) => convertArrayToObject(res.data.data, 'id')),
         enabled: true,
+        retry: 3,
+        retryDelay: 1000,
     });
 
     const resultsQuery = useQuery({
         queryKey: ['results', userId],
         queryFn: () => axios.get(`${API_BASE}/users/${userId}/results`).then((res) => res.data),
         enabled: !!userId,
+        retry: 3,
+        retryDelay: 1000,
     });
 
     const sendResultsEmail = useMutation({
@@ -64,6 +69,42 @@ export default function ResultsPage({ userId }: ResultsPageProps) {
     const handleRestartQuiz = () => {
         navigate('/dashboard');
     };
+
+    // Show loading state
+    if (tasksQuery.isLoading || criteriaQuery.isLoading || resultsQuery.isLoading) {
+        return (
+            <Box sx={{ 
+                flex: 1, 
+                mr: { xs: 0, md: '300px' }, 
+                p: { xs: 2, md: 4 }, 
+                display: 'flex', 
+                justifyContent: 'center', 
+                alignItems: 'center',
+                minHeight: '60vh'
+            }}>
+                <CircularProgress size={60} />
+            </Box>
+        );
+    }
+
+    // Show error state
+    if (tasksQuery.isError || criteriaQuery.isError || resultsQuery.isError) {
+        return (
+            <Box sx={{ 
+                flex: 1, 
+                mr: { xs: 0, md: '300px' }, 
+                p: { xs: 2, md: 4 }, 
+                display: 'flex', 
+                justifyContent: 'center', 
+                alignItems: 'center',
+                minHeight: '60vh'
+            }}>
+                <Typography variant="h6" color="error">
+                    Error loading results. Please try again later.
+                </Typography>
+            </Box>
+        );
+    }
 
     return (
         <>
