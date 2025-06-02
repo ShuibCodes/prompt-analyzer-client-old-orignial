@@ -111,7 +111,6 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSubmit, onRegisterClick, isLoad
     <Box sx={{ minHeight: '100vh', bgcolor: '#f4f6fa', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <Paper elevation={4} sx={{ p: 5, borderRadius: 4, minWidth: 350, maxWidth: 400, width: '100%', boxShadow: 3 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3, justifyContent: 'center' }}>
-          {/* You can add a logo/icon here if desired */}
           <Typography variant="h4" fontWeight="bold" sx={{ color: '#ff6600', letterSpacing: 1 }}>Prompt Pal</Typography>
         </Box>
         <Typography variant="h6" gutterBottom align="center" sx={{ mb: 2, fontWeight: 700 }}>
@@ -179,13 +178,29 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSubmit, onRegisterClick, isLoad
             ),
           }}
           sx={{ 
-            mb: 2,
+            mb: 1,
             '& .MuiFormHelperText-root.Mui-error': {
               fontSize: '0.8rem',
               marginLeft: 0,
             }
           }}
         />
+
+        <Button
+          fullWidth
+          variant="text"
+          onClick={() => window.location.href = '/forgot-password'}
+          sx={{
+            textTransform: 'none',
+            color: '#4a5568',
+            mb: 2,
+            justifyContent: 'flex-end',
+            fontSize: '0.9rem'
+          }}
+        >
+          Forgot your password?
+        </Button>
+
         <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
           <Button 
             variant="contained" 

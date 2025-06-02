@@ -14,9 +14,7 @@ import {
 import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
 import CompareIcon from '@mui/icons-material/Compare';
 import axios from 'axios';
-
-// const API_BASE = 'https://prompt-pal-api.onrender.com/api/analyzer';
-const API_BASE = 'http://localhost:1337/api/analyzer';
+import { API_BASE } from '../config';
 
 interface ImageTask {
     id: string;

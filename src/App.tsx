@@ -13,6 +13,8 @@ import DashboardPage from './pages/DashboardPage';
 import ResultsPage from './pages/ResultsPage';
 import ImageGenerationDashboard from './pages/ImageGenerationDashboard';
 import ImageGenerationTask from './pages/ImageGenerationTask';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
 
 // Theme
 const theme = createTheme({
@@ -48,6 +50,19 @@ function App() {
                     <Routes>
                         <Route 
                             path="/" 
+                            element={
+                                <Layout>
+                                    {(props) => {
+                                        if ('onUserLogin' in props) {
+                                            return <LoginPage onUserLogin={props.onUserLogin} />;
+                                        }
+                                        return null;
+                                    }}
+                                </Layout>
+                            } 
+                        />
+                        <Route 
+                            path="/login" 
                             element={
                                 <Layout>
                                     {(props) => {
@@ -124,6 +139,8 @@ function App() {
                                 </Layout>
                             } 
                         />
+                        <Route path="/forgot-password" element={<ForgotPassword />} />
+                        <Route path="/reset-password" element={<ResetPassword />} />
                     </Routes>
                 </Router>
             </QueryClientProvider>

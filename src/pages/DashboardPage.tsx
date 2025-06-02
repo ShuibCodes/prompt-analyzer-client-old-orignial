@@ -17,6 +17,7 @@ import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import type { CriteriaData } from '../types';
 import type { Image } from '../components/types';
 import './DashboardPage.css';
+import { API_BASE } from '../config';
 
 interface CriterionResult {
     criterionId: string;
@@ -33,9 +34,6 @@ interface TaskResult {
     score: number;
     criterionResults: CriterionResult[];
 }
-
-// const API_BASE = 'https://prompt-pal-api.onrender.com/api/analyzer';
-const API_BASE = 'http://localhost:1337/api/analyzer';
 
 interface DashboardPageProps {
     userId: string;
@@ -111,7 +109,7 @@ export default function DashboardPage({ userId, name }: DashboardPageProps) {
 
     const submitSolution = useMutation({
         mutationFn: ({ taskId, solutionPrompt }: { taskId: string; solutionPrompt: string }) =>
-            axios.post(`${API_BASE}/users/${userId}/submissions`, { taskId, solutionPrompt }),
+            axios.post(`${API_BASE}/users/${userId}/submit`, { taskId, solutionPrompt }),
         onSuccess: () => {
             console.log("Solution submitted successfully. Waiting for results...");
         },

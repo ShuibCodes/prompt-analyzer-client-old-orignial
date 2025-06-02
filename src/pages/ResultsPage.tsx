@@ -8,8 +8,7 @@ import RightSidebar from '../components/RightSidebar';
 import FinalResults from '../components/FinalResults';
 import { convertArrayToObject } from '../utils';
 import type { TaskData, CriteriaData, ResultsData } from '../types';
-
-const API_BASE = 'http://localhost:1337/api/analyzer';
+import { API_BASE } from '../config';
 
 interface ResultsPageProps {
     userId: string;

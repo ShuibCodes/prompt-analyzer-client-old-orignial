@@ -5,8 +5,8 @@ import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import LoginForm from '../components/LoginForm';
 import RegisterForm from '../components/RegisterForm';
-
-const API_BASE = 'http://localhost:1337/api';
+import { Button } from '@mui/material';
+import { AUTH_BASE } from '../config';
 
 interface LoginPageProps {
     onUserLogin: (userId: string, name: string) => void;
@@ -18,7 +18,7 @@ export default function LoginPage({ onUserLogin }: LoginPageProps) {
 
     const login = useMutation({
         mutationFn: (data: { identifier: string; password: string }) =>
-            axios.post(`${API_BASE}/auth/local`, data).then((res) => res.data),
+            axios.post(`${AUTH_BASE}/auth/local`, data).then((res) => res.data),
         onSuccess: (data) => {
             onUserLogin(data.user.documentId, data.user.username);
             navigate('/dashboard');
@@ -52,7 +52,7 @@ export default function LoginPage({ onUserLogin }: LoginPageProps) {
 
     const register = useMutation({
         mutationFn: (data: { username: string; email: string; password: string }) =>
-            axios.post(`${API_BASE}/auth/local/register`, data).then((res) => res.data),
+            axios.post(`${AUTH_BASE}/auth/local/register`, data).then((res) => res.data),
         onSuccess: (data) => {
             onUserLogin(data.user.documentId, data.user.username);
             navigate('/dashboard');
@@ -86,12 +86,37 @@ export default function LoginPage({ onUserLogin }: LoginPageProps) {
 
     if (isLogin) {
         return (
-            <LoginForm 
-                onSubmit={(data) => login.mutate(data)}
-                onRegisterClick={() => setIsLogin(false)}
-                isLoading={login.isPending}
-                error={login.error ? 'Please check your credentials and try again.' : null}
-            />
+            <>
+                <LoginForm 
+                    onSubmit={(data) => login.mutate(data)}
+                    onRegisterClick={() => setIsLogin(false)}
+                    isLoading={login.isPending}
+                    error={login.error ? 'Please check your credentials and try again.' : null}
+                />
+                <Button
+                    fullWidth
+                    variant="text"
+                    onClick={() => navigate('/register')}
+                    sx={{
+                        textTransform: 'none',
+                        color: '#4a5568'
+                    }}
+                >
+                    Don't have an account? Sign up
+                </Button>
+                <Button
+                    fullWidth
+                    variant="text"
+                    onClick={() => navigate('/forgot-password')}
+                    sx={{
+                        textTransform: 'none',
+                        color: '#4a5568',
+                        mt: 1
+                    }}
+                >
+                    Forgot your password?
+                </Button>
+            </>
         );
     }
 

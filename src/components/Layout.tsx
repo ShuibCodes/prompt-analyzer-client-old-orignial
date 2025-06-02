@@ -150,12 +150,12 @@ export default function Layout({ children }: LayoutProps) {
     }
 
     // If not authenticated and trying to access protected routes
-    if (!userId && location.pathname !== '/') {
+    if (!userId && !['/', '/login', '/forgot-password', '/reset-password'].includes(location.pathname)) {
         return <Navigate to="/" replace />;
     }
 
     // If authenticated and on login page, redirect to dashboard
-    if (userId && location.pathname === '/') {
+    if (userId && ['/', '/login'].includes(location.pathname)) {
         return <Navigate to="/dashboard" replace />;
     }
 
