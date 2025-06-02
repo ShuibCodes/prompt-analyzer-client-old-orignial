@@ -14,7 +14,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
-import { API_BASE } from '../config';
+import { AUTH_BASE } from '../config';
 
 export default function ResetPassword() {
     const [searchParams] = useSearchParams();
@@ -51,7 +51,7 @@ export default function ResetPassword() {
                 throw new Error('Reset code is missing');
             }
 
-            await axios.post(`${API_BASE}/auth/reset-password`, {
+            await axios.post(`${AUTH_BASE}/api/auth/reset-password`, {
                 code,
                 password,
                 passwordConfirmation: confirmPassword
