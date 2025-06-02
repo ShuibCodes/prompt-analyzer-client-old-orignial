@@ -51,7 +51,7 @@ export default function ResetPassword() {
                 throw new Error('Reset code is missing');
             }
 
-            await axios.post(`${AUTH_BASE}/api/auth/reset-password`, {
+            await axios.post(`${AUTH_BASE}/auth/reset-password`, {
                 code,
                 password,
                 passwordConfirmation: confirmPassword
