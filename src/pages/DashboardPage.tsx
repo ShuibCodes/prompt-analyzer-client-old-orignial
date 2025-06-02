@@ -97,7 +97,10 @@ export default function DashboardPage({ userId, name }: DashboardPageProps) {
 
     const tasksQuery = useQuery({
         queryKey: ['tasks', userId],
-        queryFn: () => axios.get(`${API_BASE}/users/${userId}/tasks`).then((res) => res.data.data),
+        queryFn: () => axios.get(`${API_BASE}/users/${userId}/tasks`).then((res) => {
+            console.log('Tasks loaded:', res.data.data);
+            return res.data.data;
+        }),
         enabled: !!userId,
     });
 
@@ -202,7 +205,10 @@ export default function DashboardPage({ userId, name }: DashboardPageProps) {
 
     // Check if all tasks are completed and redirect to results
     useEffect(() => {
+        console.log('Current task index:', currentTaskIndex);
+        console.log('Tasks data:', tasksQuery.data);
         if (tasksQuery.data && currentTaskIndex >= tasksQuery.data.length) {
+            console.log('No more tasks, redirecting to results');
             navigate('/results');
         }
     }, [currentTaskIndex, tasksQuery.data, navigate]);

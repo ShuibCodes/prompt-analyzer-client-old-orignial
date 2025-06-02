@@ -6,29 +6,49 @@ import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 
 interface RegisterFormProps {
-  onSubmit: (data: { email: string; password: string; username: string }) => void;
+  onSubmit: (data: { email: string; password: string; username: string, name: string, lastname: string }) => void;
   onLoginClick: () => void;
   isLoading?: boolean;
   error?: string | null;
 }
 
 interface FormErrors {
+  name?: string;
+  lastname?: string;
   username?: string;
   email?: string;
   password?: string;
 }
 
 const RegisterForm: React.FC<RegisterFormProps> = ({ onSubmit, onLoginClick, isLoading = false, error = null }) => {
+  const [name, setName] = useState('');
+  const [lastname, setLastname] = useState('');
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
-  const [touched, setTouched] = useState<{ username: boolean; email: boolean; password: boolean }>({
+  const [touched, setTouched] = useState<{ username: boolean; email: boolean; password: boolean, name: boolean, lastname: boolean }>({
     username: false,
     email: false,
     password: false,
+    name: false,
+    lastname: false
   });
+
+  const validateName = (name: string): string | undefined => {
+    if (!name.trim()) {
+      return 'Name is required';
+    }
+    return undefined;
+  };
+  
+  const validateLastname = (lastname: string): string | undefined => {
+    if (!lastname.trim()) {
+      return 'Last Name is required';
+    }
+    return undefined;
+  };
 
   const validateUsername = (username: string): string | undefined => {
     if (!username.trim()) {
@@ -65,18 +85,28 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSubmit, onLoginClick, isL
     const usernameError = validateUsername(username);
     const emailError = validateEmail(email);
     const passwordError = validatePassword(password);
+    const nameError = validateName(name);
+    const lastnameError = validateLastname(lastname);
     
     setErrors({
       username: usernameError,
       email: emailError,
       password: passwordError,
+      name: nameError,
+      lastname: lastnameError
     });
 
-    return !usernameError && !emailError && !passwordError;
+    return !usernameError && !emailError && !passwordError && !nameError && !lastnameError;
   };
 
   const handleFieldChange = (field: keyof FormErrors, value: string) => {
     switch (field) {
+      case 'name':
+        setName(value);
+        break;
+      case 'lastname':
+        setLastname(value);
+        break;
       case 'username':
         setUsername(value);
         break;
@@ -91,7 +121,9 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSubmit, onLoginClick, isL
     if (touched[field]) {
       setErrors(prev => ({
         ...prev,
-        [field]: field === 'username' ? validateUsername(value) :
+        [field]: field === 'name' ? validateName(value) :
+                 field === 'lastname' ? validateLastname(value) :
+                field === 'username' ? validateUsername(value) :
                 field === 'email' ? validateEmail(value) :
                 validatePassword(value),
       }));
@@ -102,19 +134,24 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSubmit, onLoginClick, isL
     setTouched(prev => ({ ...prev, [field]: true }));
     setErrors(prev => ({
       ...prev,
-      [field]: field === 'username' ? validateUsername(username) :
+      [field]: 
+              field === 'name' ? validateName(name) :
+              field === 'lastname' ? validateLastname(lastname) :
+              field === 'username' ? validateUsername(username) :
               field === 'email' ? validateEmail(email) :
               validatePassword(password),
     }));
   };
 
   const handleSubmit = () => {
-    setTouched({ username: true, email: true, password: true });
+    setTouched({ username: true, email: true, password: true, name: true, lastname: true });
     if (validateForm()) {
       onSubmit({ 
         username: username.trim(), 
         email: email.trim(), 
-        password: password.trim()
+        password: password.trim(),
+        name: name.trim(),
+        lastname: lastname.trim()
       });
     }
   };
@@ -150,6 +187,31 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSubmit, onLoginClick, isL
             </Alert>
           </Fade>
         )}
+
+        <TextField 
+          label="Name" 
+          fullWidth 
+          margin="normal" 
+          value={name} 
+          onChange={(e) => handleFieldChange('name', e.target.value)}
+          onBlur={() => handleFieldBlur('name')}
+          error={touched.name && !!errors.name}
+          helperText={touched.name && errors.name}
+          disabled={isLoading}
+        />
+
+        <TextField 
+          label="Last Name" 
+          fullWidth 
+          margin="normal" 
+          value={lastname} 
+          onChange={(e) => handleFieldChange('lastname', e.target.value)}
+          onBlur={() => handleFieldBlur('lastname')}
+          error={touched.lastname && !!errors.lastname}
+          helperText={touched.lastname && errors.lastname}
+          disabled={isLoading}
+        />
+
 
         <TextField 
           label="Username" 

@@ -20,7 +20,7 @@ export default function LoginPage({ onUserLogin }: LoginPageProps) {
         mutationFn: (data: { identifier: string; password: string }) =>
             axios.post(`${AUTH_BASE}/auth/local`, data).then((res) => res.data),
         onSuccess: (data) => {
-            onUserLogin(data.user.documentId, data.user.username);
+            onUserLogin(data.user.documentId, data.user.name);
             navigate('/dashboard');
         },
         onError: (error: unknown) => {
@@ -51,25 +51,42 @@ export default function LoginPage({ onUserLogin }: LoginPageProps) {
     });
 
     const register = useMutation({
-        mutationFn: (data: { username: string; email: string; password: string }) =>
-            axios.post(`${AUTH_BASE}/auth/local/register`, data).then((res) => res.data),
-        onSuccess: (data) => {
-            onUserLogin(data.user.documentId, data.user.username);
-            navigate('/dashboard');
+        mutationFn: async (userData: { username: string; email: string; password: string, name: string, lastname: string }) => {
+            try {
+                const data = {
+                    username: userData.username,
+                    email: userData.email,
+                    password: userData.password,
+                    name: userData.name,
+                    lastname: userData.lastname
+                };
+                
+                const response = await axios.post(`${AUTH_BASE}/auth/local/register`, data);
+                return response.data;
+            } catch (error) {
+                if (axios.isAxiosError(error) && error.response) {
+                    console.error('Registration error details:', {
+                        status: error.response.status,
+                        statusText: error.response.statusText,
+                        data: error.response.data
+                    });
+                }
+                throw error;
+            }
         },
         onError: (error: unknown) => {
             console.error('Registration failed:', error);
             let errorMessage = 'Failed to register. Please try again.';
             
-            if (typeof error === 'object' && error && 'response' in error) {
-                const axiosError = error as { response?: { data?: { error?: { message?: string }; message?: string } } };
-                if (axiosError.response?.data?.error?.message) {
-                    errorMessage = axiosError.response.data.error.message;
-                } else if (axiosError.response?.data?.message) {
-                    errorMessage = axiosError.response.data.message;
+            if (axios.isAxiosError(error) && error.response?.data) {
+                const errorData = error.response.data;
+                console.error('Full error response:', errorData);
+                
+                if (errorData.error?.message) {
+                    errorMessage = errorData.error.message;
+                } else if (errorData.message) {
+                    errorMessage = errorData.message;
                 }
-            } else if (error instanceof Error) {
-                errorMessage = error.message;
             }
             
             toast.error(errorMessage, {
@@ -81,6 +98,11 @@ export default function LoginPage({ onUserLogin }: LoginPageProps) {
                 draggable: true,
                 theme: "colored",
             });
+        },
+        onSuccess: (data) => {
+            console.log(data.user);
+            onUserLogin(data.user.documentId, data.user.name);
+            navigate('/dashboard');
         },
     });
 
