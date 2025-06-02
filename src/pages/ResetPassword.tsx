@@ -52,9 +52,9 @@ export default function ResetPassword() {
             }
 
             await axios.post(`${AUTH_BASE}/auth/reset-password`, {
-                code,
                 password,
-                passwordConfirmation: confirmPassword
+                passwordConfirmation: confirmPassword,
+                code
             });
             
             setSuccess(true);
