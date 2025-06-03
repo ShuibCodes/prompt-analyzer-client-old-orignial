@@ -31,6 +31,8 @@ interface CriterionResult {
 
 interface TaskResult {
     taskId: string;
+    submissionId: string;
+    submittedAt: string; // This should be ISO string from backend
     score: number;
     criterionResults: CriterionResult[];
 }
@@ -42,6 +44,7 @@ interface DashboardPageProps {
 
 export default function DashboardPage({ userId, name }: DashboardPageProps) {
     const navigate = useNavigate();
+    const [submissionTimestamp, setSubmissionTimestamp] = useState<number | null>(null);
     const [currentTaskIndex, setCurrentTaskIndex] = useState(0);
     const [userSolutions, setUserSolutions] = useState<Record<string, string>>({});
     const [evaluatingTaskId, setEvaluatingTaskId] = useState<string | null>(null);
@@ -119,6 +122,7 @@ export default function DashboardPage({ userId, name }: DashboardPageProps) {
         onError: (error: unknown) => {
             console.error('Submission failed:', error);
             setEvaluatingTaskId(null);
+            setSubmissionTimestamp(null);
             
             let errorMessage = 'Failed to submit your solution. Please try again.';
             
@@ -148,13 +152,20 @@ export default function DashboardPage({ userId, name }: DashboardPageProps) {
     const resultsQuery = useQuery({
         queryKey: ['results', userId],
         queryFn: () => axios.get(`${API_BASE}/users/${userId}/results`).then((res) => res.data),
-        enabled: !!userId && (!!evaluatingTaskId),
-        refetchInterval: () => evaluatingTaskId ? 2000 : false,
+        enabled: !!userId && !!evaluatingTaskId && !!submissionTimestamp,
+        refetchInterval: () => (evaluatingTaskId && submissionTimestamp) ? 2000 : false,
         refetchIntervalInBackground: true,
     });
 
     useEffect(() => {
-        if (!evaluatingTaskId || !resultsQuery.data) return;
+        if (!evaluatingTaskId || !submissionTimestamp || !resultsQuery.data) {
+            console.log('Missing requirements for result processing:', {
+                evaluatingTaskId: !!evaluatingTaskId,
+                submissionTimestamp: !!submissionTimestamp,
+                resultsData: !!resultsQuery.data
+            });
+            return;
+        }
       
         const newResult = resultsQuery.data.taskResults.find(
             (r: TaskResult) => r.taskId === evaluatingTaskId
@@ -164,6 +175,22 @@ export default function DashboardPage({ userId, name }: DashboardPageProps) {
         // Check if we have a valid result with actual criterion results
         if (!newResult || !Array.isArray(newResult.criterionResults) || newResult.criterionResults.length === 0) {
             console.log(`Waiting for complete results for ${evaluatingTaskId}…`);
+            return;
+        }
+
+        // NEW: Check if result is from current submission using timestamp
+        const resultTimestamp = new Date(newResult.submittedAt).getTime();
+        const submissionTime = submissionTimestamp;
+        
+        console.log('Timestamp comparison:', {
+            resultTimestamp: new Date(resultTimestamp).toISOString(),
+            submissionTimestamp: new Date(submissionTime).toISOString(),
+            isFromCurrentSubmission: resultTimestamp >= submissionTime
+        });
+
+        // Only process if result is from current submission (within 1 second tolerance for server delays)
+        if (resultTimestamp < (submissionTime - 1000)) {
+            console.log(`Result is from old submission. Result time: ${new Date(resultTimestamp).toISOString()}, Current submission time: ${new Date(submissionTime).toISOString()}`);
             return;
         }
 
@@ -183,7 +210,7 @@ export default function DashboardPage({ userId, name }: DashboardPageProps) {
             return;
         }
         
-        console.log(`Complete results received for task ${evaluatingTaskId}. Processing score.`);
+        console.log(`Complete results received for task ${evaluatingTaskId} from current submission. Processing score.`);
 
         const totalScore = newResult.criterionResults.reduce(
             (sum: number, criterion: CriterionResult) => sum + criterion.score, 0
@@ -206,9 +233,12 @@ export default function DashboardPage({ userId, name }: DashboardPageProps) {
             [evaluatingTaskId]: true
         }));
 
+        // UPDATED: Clear both states when processing is complete
         setEvaluatingTaskId(null);
+        setSubmissionTimestamp(null);
         previousTaskResultsRef.current[evaluatingTaskId] = newResult;
-    }, [resultsQuery.data, evaluatingTaskId]);
+    }, [resultsQuery.data, evaluatingTaskId, submissionTimestamp]);
+
 
     useEffect(() => {
         if (userId && !name) {
@@ -241,7 +271,12 @@ export default function DashboardPage({ userId, name }: DashboardPageProps) {
         
         console.log('Submitting solution for task:', task.id, 'Solution:', userSolution);
         
+        // NEW: Set timestamp when submission starts
+        const timestamp = Date.now();
+        setSubmissionTimestamp(timestamp);
         setEvaluatingTaskId(task.id);
+        
+        console.log('Setting submission timestamp:', new Date(timestamp).toISOString());
         
         previousTaskResultsRef.current[task.id] = resultsQuery.data?.taskResults.find(
             (r: TaskResult) => r.taskId === task.id
@@ -249,6 +284,7 @@ export default function DashboardPage({ userId, name }: DashboardPageProps) {
         
         submitSolution.mutate({ taskId: task.id, solutionPrompt: userSolution });
     };
+
 
     const task = tasksQuery.data?.[currentTaskIndex];
     const userSolution = userSolutions[task?.id] || '';
@@ -375,7 +411,7 @@ export default function DashboardPage({ userId, name }: DashboardPageProps) {
                         userSolution={userSolution}
                         onSolutionChange={(value) => setUserSolutions(prev => ({ ...prev, [task?.id]: value }))}
                         onSubmit={handleSolutionSubmit}
-                        isEvaluating={!!evaluatingTaskId}
+                        isEvaluating={!!evaluatingTaskId && !!submissionTimestamp}
                     />
                     {shouldShowResults && (
                         <TaskResults 
