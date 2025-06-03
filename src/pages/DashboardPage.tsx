@@ -161,37 +161,53 @@ export default function DashboardPage({ userId, name }: DashboardPageProps) {
         );
         const oldResult = previousTaskResultsRef.current[evaluatingTaskId];
 
-        if (!newResult || (oldResult && JSON.stringify(newResult) === JSON.stringify(oldResult))) {
-            console.log(`Waiting for an updated result for ${evaluatingTaskId}…`);
+        // Check if we have a valid result with actual criterion results
+        if (!newResult || !Array.isArray(newResult.criterionResults) || newResult.criterionResults.length === 0) {
+            console.log(`Waiting for complete results for ${evaluatingTaskId}…`);
+            return;
+        }
+
+        // Check if all criterion results have subquestion results
+        const hasIncompleteResults = newResult.criterionResults.some(
+            (criterion: CriterionResult) => !Array.isArray(criterion.subquestionResults) || criterion.subquestionResults.length === 0
+        );
+
+        if (hasIncompleteResults) {
+            console.log(`Waiting for complete criterion results for ${evaluatingTaskId}…`);
+            return;
+        }
+
+        // Check if the result is the same as the previous one
+        if (oldResult && JSON.stringify(newResult) === JSON.stringify(oldResult)) {
+            console.log(`No new results for ${evaluatingTaskId}…`);
             return;
         }
         
-        console.log(`Results received for task ${evaluatingTaskId}. Processing score.`);
+        console.log(`Complete results received for task ${evaluatingTaskId}. Processing score.`);
 
-        if (newResult) {
-            const totalScore = newResult.criterionResults.reduce(
-                (sum: number, criterion: CriterionResult) => sum + criterion.score, 0
-            );
-            const maxPossibleScore = newResult.criterionResults.length * 5;
-            const percentageScore = Math.round((totalScore / maxPossibleScore) * 100);
-            
-            setTaskAttempts(prev => ({
-                ...prev,
-                [evaluatingTaskId]: (prev[evaluatingTaskId] || 0) + 1
-            }));
-            
-            setTaskScores(prev => ({
-                ...prev,
-                [evaluatingTaskId]: [...(prev[evaluatingTaskId] || []), percentageScore]
-            }));
-            
-            setShowResults(prev => ({
-                ...prev,
-                [evaluatingTaskId]: true
-            }));
+        const totalScore = newResult.criterionResults.reduce(
+            (sum: number, criterion: CriterionResult) => sum + criterion.score, 0
+        );
+        const maxPossibleScore = newResult.criterionResults.length * 5;
+        const percentageScore = Math.round((totalScore / maxPossibleScore) * 100);
+        
+        setTaskAttempts(prev => ({
+            ...prev,
+            [evaluatingTaskId]: (prev[evaluatingTaskId] || 0) + 1
+        }));
+        
+        setTaskScores(prev => ({
+            ...prev,
+            [evaluatingTaskId]: [...(prev[evaluatingTaskId] || []), percentageScore]
+        }));
+        
+        setShowResults(prev => ({
+            ...prev,
+            [evaluatingTaskId]: true
+        }));
 
-            setEvaluatingTaskId(null);
-        }
+        setEvaluatingTaskId(null);
+        previousTaskResultsRef.current[evaluatingTaskId] = newResult;
     }, [resultsQuery.data, evaluatingTaskId]);
 
     useEffect(() => {
