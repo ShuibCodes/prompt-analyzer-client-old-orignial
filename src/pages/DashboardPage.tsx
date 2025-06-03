@@ -100,7 +100,7 @@ export default function DashboardPage({ userId, name }: DashboardPageProps) {
 
     const tasksQuery = useQuery({
         queryKey: ['tasks', userId],
-        queryFn: () => axios.get(`${API_BASE}/users/${userId}/tasks`).then((res) => {
+        queryFn: () => axios.get(`${API_BASE}/daily-tasks`).then((res) => {
             console.log('Tasks loaded:', res.data.data);
             return res.data.data;
         }),

@@ -19,7 +19,7 @@ export default function ResultsPage({ userId }: ResultsPageProps) {
 
     const tasksQuery = useQuery({
         queryKey: ['tasks', userId],
-        queryFn: () => axios.get(`${API_BASE}/users/${userId}/tasks`).then((res) => res.data.data),
+        queryFn: () => axios.get(`${API_BASE}/daily-tasks`).then((res) => res.data.data),
         enabled: !!userId,
         retry: 3,
         retryDelay: 1000,
