@@ -12,7 +12,7 @@ export default function BaseLayout({ name, onLogout, children }: BaseLayoutProps
     return (
         <Box sx={{ display: 'flex', minHeight: '100vh' }}>
             <LeftSidebar 
-                name={name}
+                userName={name}
                 onLogout={onLogout}
             />
             <Box sx={{ 
