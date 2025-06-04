@@ -108,7 +108,7 @@ export default function TaskPage({ userId }: TaskPageProps) {
     });
 
     const sendResultsEmail = useMutation({
-        mutationFn: () => axios.post(`${API_BASE}/users/${userId}/send-results`),
+        mutationFn: () => axios.post(`${API_BASE}/users/${userId}/tasks/${taskId}/send-results`),
         onSuccess: () => {
             toast.success('Results have been sent to your email successfully! 🎉', {
                 position: "top-center",
