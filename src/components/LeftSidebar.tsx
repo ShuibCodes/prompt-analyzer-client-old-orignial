@@ -33,9 +33,12 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({ userName = "Regi Loshi", user
         >
           <Zap size={24} color="#111" /> Daily Challenge
         </a>
-        <div className="sidebar-link">
+        <a
+          className={`sidebar-link${location.pathname === "/calendar" ? " active" : ""}`}
+          href="/calendar"
+        >
           <Calendar size={24} color="#111" /> All Challenges
-        </div>
+        </a>
         <div className="sidebar-link">
           <Sparkles size={24} color="#111" />
           Prompt Improver

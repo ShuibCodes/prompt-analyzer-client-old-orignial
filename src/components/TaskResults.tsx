@@ -7,10 +7,19 @@ interface TaskResultsProps {
   taskResult: TaskResult;
   criteriaData: CriteriaData;
   currentAttempts: number;
-  onNextTask: () => void;
+  onNextTask?: () => void;
+  onSendEmail?: () => void;
+  isSendingEmail?: boolean;
 }
 
-const TaskResults: React.FC<TaskResultsProps> = ({ taskResult, criteriaData, currentAttempts, onNextTask }) => {
+const TaskResults: React.FC<TaskResultsProps> = ({ 
+  taskResult, 
+  criteriaData, 
+  currentAttempts, 
+  onNextTask,
+  onSendEmail,
+  isSendingEmail
+}) => {
   const totalScore = taskResult.criterionResults.reduce(
     (sum, criterion) => sum + criterion.score, 0
   );
@@ -73,14 +82,30 @@ const TaskResults: React.FC<TaskResultsProps> = ({ taskResult, criteriaData, cur
           ))}
         </Box>
       ))}
-      <Button
-        variant="contained"
-        color="primary"
-        sx={{ mt: 3 }}
-        onClick={onNextTask}
-      >
-        Next Task
-      </Button>
+      
+      {/* Show either Next Task or Send Email button */}
+      {onNextTask && (
+        <Button
+          variant="contained"
+          color="primary"
+          sx={{ mt: 3 }}
+          onClick={onNextTask}
+        >
+          Next Task
+        </Button>
+      )}
+      
+      {onSendEmail && (
+        <Button
+          variant="contained"
+          color="primary"
+          sx={{ mt: 3 }}
+          onClick={onSendEmail}
+          disabled={isSendingEmail}
+        >
+          {isSendingEmail ? 'Sending Results...' : 'Send Results by Email'}
+        </Button>
+      )}
     </Box>
   );
 };

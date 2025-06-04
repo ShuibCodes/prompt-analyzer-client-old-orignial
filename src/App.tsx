@@ -15,6 +15,8 @@ import ImageGenerationDashboard from './pages/ImageGenerationDashboard';
 import ImageGenerationTask from './pages/ImageGenerationTask';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
+import CalendarPage from './pages/CalendarPage.tsx';
+import TaskPage from './pages/TaskPage';
 
 // Theme
 const theme = createTheme({
@@ -141,6 +143,37 @@ function App() {
                         />
                         <Route path="/forgot-password" element={<ForgotPassword />} />
                         <Route path="/reset-password" element={<ResetPassword />} />
+                        <Route 
+                            path="/calendar" 
+                            element={
+                                <Layout>
+                                    {(props) => {
+                                        if ('onUserLogin' in props) {
+                                            return null; // This shouldn't happen due to redirects
+                                        }
+                                        return <CalendarPage />;
+                                    }}
+                                </Layout>
+                            }
+                        />
+                        <Route 
+                            path="/task/:taskId" 
+                            element={
+                                <Layout>
+                                    {(props) => {
+                                        if ('onUserLogin' in props) {
+                                            return null; // This shouldn't happen due to redirects
+                                        }
+                                        return (
+                                            <TaskPage 
+                                                userId={props.userId} 
+                                                name={props.name} 
+                                            />
+                                        );
+                                    }}
+                                </Layout>
+                            }
+                        />
                     </Routes>
                 </Router>
             </QueryClientProvider>
