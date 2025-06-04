@@ -10,6 +10,7 @@ interface RegisterFormProps {
   onLoginClick: () => void;
   isLoading?: boolean;
   error?: string | null;
+  embedded?: boolean;
 }
 
 interface FormErrors {
@@ -20,7 +21,7 @@ interface FormErrors {
   password?: string;
 }
 
-const RegisterForm: React.FC<RegisterFormProps> = ({ onSubmit, onLoginClick, isLoading = false, error = null }) => {
+const RegisterForm: React.FC<RegisterFormProps> = ({ onSubmit, onLoginClick, isLoading = false, error = null, embedded = false }) => {
   const [name, setName] = useState('');
   const [lastname, setLastname] = useState('');
   const [username, setUsername] = useState('');
@@ -160,6 +161,159 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSubmit, onLoginClick, isL
     setShowPassword(!showPassword);
   };
 
+  // If embedded, just return the form content without the full layout
+  if (embedded) {
+    return (
+      <Box>
+        {error && (
+          <Fade in={true}>
+            <Alert 
+              severity="error" 
+              icon={<ErrorIcon />}
+              sx={{ 
+                mb: 2, 
+                borderRadius: 2,
+                '& .MuiAlert-message': {
+                  fontSize: '0.9rem',
+                }
+              }}
+            >
+              {error}
+            </Alert>
+          </Fade>
+        )}
+
+        <TextField 
+          label="Name" 
+          fullWidth 
+          margin="normal" 
+          value={name} 
+          onChange={(e) => handleFieldChange('name', e.target.value)}
+          onBlur={() => handleFieldBlur('name')}
+          error={touched.name && !!errors.name}
+          helperText={touched.name && errors.name}
+          disabled={isLoading}
+          sx={{ 
+            mb: 2,
+            '& .MuiFormHelperText-root.Mui-error': {
+              fontSize: '0.8rem',
+              marginLeft: 0,
+            }
+          }}
+        />
+        <TextField 
+          label="Last Name" 
+          fullWidth 
+          margin="normal" 
+          value={lastname} 
+          onChange={(e) => handleFieldChange('lastname', e.target.value)}
+          onBlur={() => handleFieldBlur('lastname')}
+          error={touched.lastname && !!errors.lastname}
+          helperText={touched.lastname && errors.lastname}
+          disabled={isLoading}
+          sx={{ 
+            mb: 2,
+            '& .MuiFormHelperText-root.Mui-error': {
+              fontSize: '0.8rem',
+              marginLeft: 0,
+            }
+          }}
+        />
+        <TextField 
+          label="Username" 
+          fullWidth 
+          margin="normal" 
+          value={username} 
+          onChange={(e) => handleFieldChange('username', e.target.value)}
+          onBlur={() => handleFieldBlur('username')}
+          error={touched.username && !!errors.username}
+          helperText={touched.username && errors.username}
+          disabled={isLoading}
+          sx={{ 
+            mb: 2,
+            '& .MuiFormHelperText-root.Mui-error': {
+              fontSize: '0.8rem',
+              marginLeft: 0,
+            }
+          }}
+        />
+        <TextField 
+          label="Email" 
+          fullWidth 
+          margin="normal" 
+          value={email} 
+          onChange={(e) => handleFieldChange('email', e.target.value)}
+          onBlur={() => handleFieldBlur('email')}
+          error={touched.email && !!errors.email}
+          helperText={touched.email && errors.email}
+          disabled={isLoading}
+          sx={{ 
+            mb: 2,
+            '& .MuiFormHelperText-root.Mui-error': {
+              fontSize: '0.8rem',
+              marginLeft: 0,
+            }
+          }}
+        />
+        <TextField 
+          label="Password" 
+          type={showPassword ? 'text' : 'password'}
+          fullWidth 
+          margin="normal" 
+          value={password} 
+          onChange={(e) => handleFieldChange('password', e.target.value)}
+          onBlur={() => handleFieldBlur('password')}
+          error={touched.password && !!errors.password}
+          helperText={touched.password && errors.password}
+          disabled={isLoading}
+          InputProps={{
+            endAdornment: (
+              <InputAdornment position="end">
+                <IconButton
+                  aria-label="toggle password visibility"
+                  onClick={handleClickShowPassword}
+                  edge="end"
+                >
+                  {showPassword ? <VisibilityOff /> : <Visibility />}
+                </IconButton>
+              </InputAdornment>
+            ),
+          }}
+          sx={{ 
+            mb: 1,
+            '& .MuiFormHelperText-root.Mui-error': {
+              fontSize: '0.8rem',
+              marginLeft: 0,
+            }
+          }}
+        />
+
+        <Button
+          fullWidth
+          variant="contained" 
+          color="warning"
+          onClick={handleSubmit}
+          disabled={isLoading || !name.trim() || !lastname.trim() || !username.trim() || !email.trim() || !password.trim()}
+          sx={{ 
+            mt: 2,
+            fontWeight: 700, 
+            borderRadius: 1, 
+            py: 1.2, 
+            fontSize: '1.1rem', 
+            boxShadow: '0 2px 8px #ffe08288',
+            '&:disabled': {
+              opacity: 0.6,
+            }
+          }}
+          startIcon={isLoading ? undefined : <EmojiEventsIcon />}
+        >
+          {isLoading ? 'Creating account...' : 'Create Account'}
+        </Button>
+      </Box>
+    );
+  }
+
+  // Original full-page layout for non-embedded use
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: '#f4f6fa', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <Paper elevation={4} sx={{ p: 5, borderRadius: 4, minWidth: 350, maxWidth: 400, width: '100%', boxShadow: 3 }}>

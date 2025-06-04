@@ -10,6 +10,7 @@ interface LoginFormProps {
   onRegisterClick: () => void;
   isLoading?: boolean;
   error?: string | null;
+  embedded?: boolean;
 }
 
 interface FormErrors {
@@ -17,7 +18,7 @@ interface FormErrors {
   password?: string;
 }
 
-const LoginForm: React.FC<LoginFormProps> = ({ onSubmit, onRegisterClick, isLoading = false, error = null }) => {
+const LoginForm: React.FC<LoginFormProps> = ({ onSubmit, onRegisterClick, isLoading = false, error = null, embedded = false }) => {
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -107,6 +108,105 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSubmit, onRegisterClick, isLoad
     }
   };
 
+  // If embedded, just return the form content without the full layout
+  if (embedded) {
+    return (
+      <Box>
+        {error && (
+          <Fade in={true}>
+            <Alert 
+              severity="error" 
+              icon={<ErrorIcon />}
+              sx={{ 
+                mb: 2, 
+                borderRadius: 2,
+                '& .MuiAlert-message': {
+                  fontSize: '0.9rem',
+                }
+              }}
+            >
+              {error}
+            </Alert>
+          </Fade>
+        )}
+
+        <TextField 
+          label="Email" 
+          fullWidth 
+          margin="normal" 
+          value={identifier} 
+          onChange={(e) => handleIdentifierChange(e.target.value)}
+          onBlur={handleIdentifierBlur}
+          error={touched.identifier && !!errors.identifier}
+          helperText={touched.identifier && errors.identifier}
+          disabled={isLoading}
+          sx={{ 
+            mb: 2,
+            '& .MuiFormHelperText-root.Mui-error': {
+              fontSize: '0.8rem',
+              marginLeft: 0,
+            }
+          }}
+        />
+        <TextField 
+          label="Password" 
+          type={showPassword ? 'text' : 'password'}
+          fullWidth 
+          margin="normal" 
+          value={password} 
+          onChange={(e) => handlePasswordChange(e.target.value)}
+          onBlur={handlePasswordBlur}
+          error={touched.password && !!errors.password}
+          helperText={touched.password && errors.password}
+          disabled={isLoading}
+          InputProps={{
+            endAdornment: (
+              <InputAdornment position="end">
+                <IconButton
+                  aria-label="toggle password visibility"
+                  onClick={handleClickShowPassword}
+                  edge="end"
+                >
+                  {showPassword ? <VisibilityOff /> : <Visibility />}
+                </IconButton>
+              </InputAdornment>
+            ),
+          }}
+          sx={{ 
+            mb: 1,
+            '& .MuiFormHelperText-root.Mui-error': {
+              fontSize: '0.8rem',
+              marginLeft: 0,
+            }
+          }}
+        />
+
+        <Button
+          fullWidth
+          variant="contained" 
+          color="warning"
+          onClick={handleSubmit}
+          disabled={isLoading || !identifier.trim() || !password.trim()}
+          sx={{ 
+            mt: 2,
+            fontWeight: 700, 
+            borderRadius: 1, 
+            py: 1.2, 
+            fontSize: '1.1rem', 
+            boxShadow: '0 2px 8px #ffe08288',
+            '&:disabled': {
+              opacity: 0.6,
+            }
+          }}
+          startIcon={isLoading ? undefined : <EmojiEventsIcon />}
+        >
+          {isLoading ? 'Logging in...' : 'Login'}
+        </Button>
+      </Box>
+    );
+  }
+
+  // Original full-page layout for non-embedded use
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: '#f4f6fa', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <Paper elevation={4} sx={{ p: 5, borderRadius: 4, minWidth: 350, maxWidth: 400, width: '100%', boxShadow: 3 }}>
