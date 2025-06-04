@@ -130,6 +130,7 @@ export default function ResultsPage({ userId }: ResultsPageProps) {
                         onSendEmail={() => sendResultsEmail.mutate()}
                         isSendingEmail={sendResultsEmail.isPending}
                         onRestartQuiz={handleRestartQuiz}
+                        userId={userId}
                     />
                 </Paper>
             </Box>

@@ -346,6 +346,7 @@ export default function TaskPage({ userId }: TaskPageProps) {
                             currentAttempts={currentAttempts}
                             onSendEmail={() => sendResultsEmail.mutate()}
                             isSendingEmail={sendResultsEmail.isPending}
+                            userId={userId}
                         />
                     )}
                 </Paper>

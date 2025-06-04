@@ -151,7 +151,11 @@ function App() {
                                         if ('onUserLogin' in props) {
                                             return null; // This shouldn't happen due to redirects
                                         }
-                                        return <CalendarPage />;
+                                        return (
+                                            <CalendarPage 
+                                                userId={props.userId}
+                                            />
+                                        );
                                     }}
                                 </Layout>
                             }

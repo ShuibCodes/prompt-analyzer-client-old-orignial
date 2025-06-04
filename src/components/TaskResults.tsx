@@ -1,7 +1,10 @@
 import { Box, Typography, LinearProgress, Button } from '@mui/material';
 import React from 'react';
+import { useQuery } from '@tanstack/react-query';
+import axios from 'axios';
 import ResultCharts from './ResultCharts';
 import { TaskResult, CriteriaData } from '../types';
+import { API_BASE } from '../config';
 
 interface TaskResultsProps {
   taskResult: TaskResult;
@@ -10,6 +13,7 @@ interface TaskResultsProps {
   onNextTask?: () => void;
   onSendEmail?: () => void;
   isSendingEmail?: boolean;
+  userId: string;
 }
 
 const TaskResults: React.FC<TaskResultsProps> = ({ 
@@ -18,13 +22,23 @@ const TaskResults: React.FC<TaskResultsProps> = ({
   currentAttempts, 
   onNextTask,
   onSendEmail,
-  isSendingEmail
+  isSendingEmail,
+  userId
 }) => {
   const totalScore = taskResult.criterionResults.reduce(
     (sum, criterion) => sum + criterion.score, 0
   );
   const maxPossibleScore = taskResult.criterionResults.length * 5;
   const percentageScore = Math.round((totalScore / maxPossibleScore) * 100);
+
+  // Fetch average scores for comparison (excluding current user)
+  const averageScoresQuery = useQuery({
+    queryKey: ['averageScores', userId],
+    queryFn: () => axios.get(`${API_BASE}/average-scores?excludeUserId=${userId}`).then((res) => res.data.data),
+    enabled: !!userId,
+    retry: 3,
+    retryDelay: 1000,
+  });
 
   // Add criterion names to the results
   const criterionResultsWithNames = taskResult.criterionResults.map(criterion => ({
@@ -65,19 +79,20 @@ const TaskResults: React.FC<TaskResultsProps> = ({
         </Typography>
       </Box>
 
-      {/* Add the charts component */}
+      {/* Add the charts component with community comparison */}
       <ResultCharts 
         criterionResults={criterionResultsWithNames}
+        averageScores={averageScoresQuery.isSuccess ? averageScoresQuery.data?.criteriaAverages : undefined}
       />
 
       {taskResult.criterionResults.map(criterion => (
         <Box key={criterion.criterionId} sx={{ mb: 2 }}>
           <Typography fontWeight="bold">
-            {criteriaData?.[criterion.criterionId]?.name || criterion.criterionId}: {criterion.score}
+            {criteriaData?.[criterion.criterionId]?.name || criterion.criterionId}: {criterion.score.toFixed(2)}
           </Typography>
           {criterion.subquestionResults?.map(sub => (
             <Typography key={sub.subquestionId} sx={{ pl: 2 }}>
-              - {sub.feedback} (Score: {sub.score})
+              - {sub.feedback} (Score: {sub.score.toFixed(2)})
             </Typography>
           ))}
         </Box>

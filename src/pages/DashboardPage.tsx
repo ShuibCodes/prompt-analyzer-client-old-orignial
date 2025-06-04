@@ -419,6 +419,7 @@ export default function DashboardPage({ userId, name }: DashboardPageProps) {
                             criteriaData={criteriaQuery.data as CriteriaData || {}}
                             currentAttempts={currentAttempts}
                             onNextTask={() => setCurrentTaskIndex(prev => prev + 1)}
+                            userId={userId}
                         />
                     )}
                 </Paper>

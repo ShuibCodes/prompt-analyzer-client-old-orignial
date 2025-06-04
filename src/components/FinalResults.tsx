@@ -3,8 +3,11 @@ import CelebrationIcon from '@mui/icons-material/Celebration';
 import EmailIcon from '@mui/icons-material/Email';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import React, { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import axios from 'axios';
 import ResultCharts from './ResultCharts';
 import { TaskData, CriteriaData, ResultsData } from '../types';
+import { API_BASE } from '../config';
 
 interface FinalResultsProps {
   tasksMap: TaskData;
@@ -13,6 +16,7 @@ interface FinalResultsProps {
   onSendEmail: () => void;
   isSendingEmail: boolean;
   onRestartQuiz: () => void;
+  userId: string;
 }
 
 const FinalResults: React.FC<FinalResultsProps> = ({ 
@@ -21,7 +25,8 @@ const FinalResults: React.FC<FinalResultsProps> = ({
   resultsData, 
   onSendEmail, 
   isSendingEmail, 
-  onRestartQuiz 
+  onRestartQuiz,
+  userId
 }) => {
   const finalScore = resultsData?.score ?? 0;
   const scoreColor = finalScore >= 4 ? '#43a047' : finalScore >= 2.5 ? '#ffa000' : '#e53935';
@@ -29,6 +34,15 @@ const FinalResults: React.FC<FinalResultsProps> = ({
   const tasks = resultsData?.taskResults || [];
   const currentTask = tasks[currentTaskPage - 1];
   const handlePageChange = (_: React.ChangeEvent<unknown>, value: number) => setCurrentTaskPage(value);
+
+  // Fetch average scores for comparison (excluding current user)
+  const averageScoresQuery = useQuery({
+    queryKey: ['averageScores', userId],
+    queryFn: () => axios.get(`${API_BASE}/average-scores?excludeUserId=${userId}`).then((res) => res.data.data),
+    enabled: !!userId,
+    retry: 3,
+    retryDelay: 1000,
+  });
 
   // Add criterion names to the results
   const criterionResultsWithNames = currentTask?.criterionResults?.map(criterion => ({
@@ -106,6 +120,7 @@ const FinalResults: React.FC<FinalResultsProps> = ({
           {currentTask && (
             <ResultCharts 
               criterionResults={criterionResultsWithNames}
+              averageScores={averageScoresQuery.isSuccess ? averageScoresQuery.data?.criteriaAverages : undefined}
             />
           )}
 
@@ -119,11 +134,11 @@ const FinalResults: React.FC<FinalResultsProps> = ({
                 <Box key={criterion.criterionId} mt={1} sx={{ pl: 2 }}>
                   <Typography fontWeight="bold" sx={{ color: '#1976d2' }}>
                     {criteriaData?.[criterion.criterionId]?.name || criterion.criterionId}
-                    <span style={{ marginLeft: 8, color: '#888', fontWeight: 400 }}>Score: {criterion.score}</span>
+                    <span style={{ marginLeft: 8, color: '#888', fontWeight: 400 }}>Score: {criterion.score.toFixed(2)}</span>
                   </Typography>
                   {criterion.subquestionResults?.map(sub => (
                     <Typography key={sub.subquestionId} sx={{ pl: 2, color: '#555' }}>
-                      - {sub.feedback} <span style={{ color: '#888' }}>(Score: {sub.score})</span>
+                      - {sub.feedback} <span style={{ color: '#888' }}>(Score: {sub.score.toFixed(2)})</span>
                     </Typography>
                   ))}
                 </Box>
