@@ -12,6 +12,10 @@
   z-index: 1000;
   padding-bottom: 0;
   transition: transform 0.3s ease-in-out;
+  overflow-y: auto;
+  overflow-x: hidden;
+  /* Improve scrolling on mobile */
+  -webkit-overflow-scrolling: touch;
 }
 
 .sidebar-logo-wrap {
@@ -305,6 +309,9 @@
   .sidebar-fixed {
     transform: translateX(-100%);
     box-shadow: none;
+    /* Ensure proper scrolling on mobile */
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
   }
   
   .sidebar-fixed.mobile-open {
@@ -315,6 +322,35 @@
   .sidebar-fixed.mobile-closed {
     transform: translateX(-100%);
     box-shadow: none;
+  }
+
+  /* Adjust spacing for mobile */
+  .sidebar-logo-wrap {
+    padding-top: 20px;
+  }
+
+  .sidebar-nav {
+    padding: 12px;
+  }
+
+  .sidebar-stats {
+    padding: 12px;
+  }
+
+  .sidebar-promo {
+    margin: 16px 0 0 0;
+    padding: 0 12px;
+  }
+
+  .sidebar-user {
+    padding: 16px 12px;
+    margin-bottom: 20px; /* Extra space at bottom for easier scrolling */
+  }
+
+  /* Make links more touch-friendly */
+  .sidebar-link {
+    padding: 12px;
+    margin-bottom: 4px;
   }
 }
 
