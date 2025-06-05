@@ -8,6 +8,14 @@ import RegisterForm from '../components/RegisterForm';
 import GoogleSignIn from '../components/GoogleSignIn';
 import { Button, Box, Divider, Typography, Paper } from '@mui/material';
 import { AUTH_BASE, API_BASE } from '../config';
+import { 
+    checkLoginRateLimit, 
+    recordLoginAttempt, 
+    getLoginAttemptsRemaining, 
+    getLoginLockoutTime, 
+    clearLoginRateLimit 
+} from '../utils/rateLimiter';
+import { getAuthErrorMessage, getRegistrationErrorMessage } from '../utils/errorHandler';
 
 interface LoginPageProps {
     onUserLogin: (userId: string, name: string) => void;
@@ -29,6 +37,8 @@ export default function LoginPage({ onUserLogin }: LoginPageProps) {
         },
         onSuccess: (data) => {
             if (data.success) {
+                // Clear any existing rate limits on successful login
+                clearLoginRateLimit(data.user.email);
                 onUserLogin(data.user.id, data.user.name);
                 navigate('/dashboard');
                 toast.success(`Welcome, ${data.user.name}!`, {
@@ -42,10 +52,9 @@ export default function LoginPage({ onUserLogin }: LoginPageProps) {
         },
         onError: (error: unknown) => {
             console.error('Google sign-in error:', error);
-            const errorMessage = axios.isAxiosError(error) && error.response?.data?.error 
-                ? error.response.data.error 
-                : 'Failed to sign in with Google';
-            toast.error(errorMessage, {
+            const friendlyError = getAuthErrorMessage(error);
+            
+            toast.error(friendlyError.message, {
                 position: "top-center",
                 autoClose: 5000,
                 theme: "colored",
@@ -70,25 +79,48 @@ export default function LoginPage({ onUserLogin }: LoginPageProps) {
     };
 
     const login = useMutation({
-        mutationFn: (data: { identifier: string; password: string }) =>
-            axios.post(`${AUTH_BASE}/auth/local`, data).then((res) => res.data),
-        onSuccess: (data) => {
+        mutationFn: async (data: { identifier: string; password: string }) => {
+            // Check rate limiting before attempting login
+            const identifier = data.identifier.toLowerCase();
+            
+            if (checkLoginRateLimit(identifier)) {
+                const lockoutTime = getLoginLockoutTime(identifier);
+                const remainingTime = Math.ceil(lockoutTime / (60 * 1000)); // Convert to minutes
+                throw new Error(`Too many failed login attempts. Please try again in ${remainingTime} minutes.`);
+            }
+
+            // Record the login attempt
+            recordLoginAttempt(identifier);
+
+            const response = await axios.post(`${AUTH_BASE}/auth/local`, data);
+            return response.data;
+        },
+        onSuccess: (data, variables) => {
+            // Clear rate limits on successful login
+            clearLoginRateLimit(variables.identifier.toLowerCase());
+            
             onUserLogin(data.user.documentId, data.user.name);
             navigate('/dashboard');
-        },
-        onError: (error: unknown) => {
-            console.error('Login failed:', error);
-            let errorMessage = 'Failed to login. Please check your credentials.';
             
-            if (typeof error === 'object' && error && 'response' in error) {
-                const axiosError = error as { response?: { data?: { error?: { message?: string }; message?: string } } };
-                if (axiosError.response?.data?.error?.message) {
-                    errorMessage = axiosError.response.data.error.message;
-                } else if (axiosError.response?.data?.message) {
-                    errorMessage = axiosError.response.data.message;
+            toast.success(`Welcome back, ${data.user.name}!`, {
+                position: "top-center",
+                autoClose: 3000,
+                theme: "colored",
+            });
+        },
+        onError: (error: unknown, variables) => {
+            console.error('Login failed:', error);
+            
+            const friendlyError = getAuthErrorMessage(error);
+            let errorMessage = friendlyError.message;
+            
+            // Show remaining attempts if rate limited and not from our custom rate limiter
+            const identifier = variables.identifier.toLowerCase();
+            if (!errorMessage.includes('Too many failed login attempts') && friendlyError.isUserError) {
+                const remaining = getLoginAttemptsRemaining(identifier);
+                if (remaining > 0 && remaining < 5) {
+                    errorMessage += ` (${remaining} attempts remaining)`;
                 }
-            } else if (error instanceof Error) {
-                errorMessage = error.message;
             }
             
             toast.error(errorMessage, {
@@ -129,20 +161,10 @@ export default function LoginPage({ onUserLogin }: LoginPageProps) {
         },
         onError: (error: unknown) => {
             console.error('Registration failed:', error);
-            let errorMessage = 'Failed to register. Please try again.';
             
-            if (axios.isAxiosError(error) && error.response?.data) {
-                const errorData = error.response.data;
-                console.error('Full error response:', errorData);
-                
-                if (errorData.error?.message) {
-                    errorMessage = errorData.error.message;
-                } else if (errorData.message) {
-                    errorMessage = errorData.message;
-                }
-            }
+            const friendlyError = getRegistrationErrorMessage(error);
             
-            toast.error(errorMessage, {
+            toast.error(friendlyError.message, {
                 position: "top-center",
                 autoClose: 5000,
                 hideProgressBar: false,

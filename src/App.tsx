@@ -8,6 +8,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Layout from './components/Layout';
+import SecurityHeaders from './components/SecurityHeaders';
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
 import ResultsPage from './pages/ResultsPage';
@@ -41,12 +42,31 @@ const theme = createTheme({
     },
 });
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+    defaultOptions: {
+        queries: {
+            retry: (failureCount, error: unknown) => {
+                // Don't retry on 401/403 errors (authentication issues)
+                if (typeof error === 'object' && 
+                    error !== null && 
+                    'response' in error) {
+                    const axiosError = error as { response?: { status?: number } };
+                    if (axiosError.response?.status === 401 || axiosError.response?.status === 403) {
+                        return false;
+                    }
+                }
+                return failureCount < 3;
+            },
+            staleTime: 5 * 60 * 1000, // 5 minutes
+        },
+    },
+});
 
 function App() {
     return (
         <ThemeProvider theme={theme}>
             <CssBaseline enableColorScheme/>
+            <SecurityHeaders />
             <QueryClientProvider client={queryClient}>
                 <Router>
                     <Routes>

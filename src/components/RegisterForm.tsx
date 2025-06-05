@@ -4,6 +4,7 @@ import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import ErrorIcon from '@mui/icons-material/Error';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
+import { validatePassword as validatePasswordStrength } from '../utils/passwordValidator';
 
 interface RegisterFormProps {
   onSubmit: (data: { email: string; password: string; username: string, name: string, lastname: string }) => void;
@@ -76,9 +77,14 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSubmit, onLoginClick, isL
     if (!password) {
       return 'Password is required';
     }
-    if (password.length < 6) {
-      return 'Password must be at least 6 characters long';
+    
+    // Use the comprehensive password validation utility
+    const validation = validatePasswordStrength(password);
+    
+    if (!validation.isValid) {
+      return validation.errors.join('. ');
     }
+    
     return undefined;
   };
 

@@ -14,6 +14,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { API_BASE } from '../config';
+import { SecureAuth } from '../components/SecureAuth';
 
 interface ImageTask {
     id: string;
@@ -42,39 +43,127 @@ interface ImageTask {
 export default function ImageGenerationDashboard() {
     const [imageTasks, setImageTasks] = useState<ImageTask[]>([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
     const navigate = useNavigate();
 
-    const getStoredUserId = () => {
-        try {
-            const stored = localStorage.getItem('promptPalAuth');
-            if (!stored) return null;
-            const authData = JSON.parse(stored);
-            return authData.userId;
-        } catch (error) {
-            console.error('Error reading userId:', error);
-            return null;
-        }
+    // Use the new secure authentication system
+    const getAuthenticatedUser = () => {
+        const authData = SecureAuth.getAuth();
+        return authData ? { userId: authData.userId, name: authData.name } : null;
     };
 
-    const userId = getStoredUserId();
+    const user = getAuthenticatedUser();
 
     useEffect(() => {
         const fetchImageTasks = async () => {
-            if (!userId) return;
-            
             try {
                 setLoading(true);
-                const response = await axios.get(`${API_BASE}/users/${userId}/image-tasks`);
+                setError(null);
+                
+                // Check if user is authenticated using the new system
+                if (!user) {
+                    console.warn('No authenticated user found, redirecting to login');
+                    setError('Please log in to view image tasks');
+                    setLoading(false);
+                    // Redirect to login after a delay
+                    setTimeout(() => navigate('/'), 2000);
+                    return;
+                }
+                
+                console.log('Fetching image tasks for user:', user.userId);
+                console.log('API endpoint:', `${API_BASE}/users/${user.userId}/image-tasks`);
+                
+                const response = await axios.get(`${API_BASE}/users/${user.userId}/image-tasks`);
+                console.log('Image tasks response:', response.data);
+                
                 setImageTasks(response.data.data || []);
             } catch (error) {
                 console.error('Error fetching image tasks:', error);
+                
+                let errorMessage = 'Failed to load image tasks';
+                if (axios.isAxiosError(error)) {
+                    if (error.response?.status === 401) {
+                        errorMessage = 'Authentication required. Please log in again.';
+                        // Clear invalid session
+                        SecureAuth.clearAuth();
+                        setTimeout(() => navigate('/'), 2000);
+                    } else if (error.response?.status === 404) {
+                        errorMessage = 'Image tasks not found. The feature may not be available yet.';
+                    } else if (error.response?.data?.message) {
+                        errorMessage = error.response.data.message;
+                    }
+                }
+                
+                setError(errorMessage);
             } finally {
                 setLoading(false);
             }
         };
 
         fetchImageTasks();
-    }, [userId]);
+    }, [user?.userId, navigate]);
+
+    // Early return for loading state
+    if (loading) {
+        return (
+            <Box sx={{ 
+                flexGrow: 1, 
+                p: { xs: 2, md: 3 },
+                minHeight: '100vh',
+                bgcolor: '#f8fafc',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center'
+            }}>
+                <LinearProgress sx={{ width: '50%', mb: 2 }} />
+                <Typography variant="body1" color="text.secondary">
+                    Loading image generation tasks...
+                </Typography>
+            </Box>
+        );
+    }
+
+    // Early return for error state
+    if (error) {
+        return (
+            <Box sx={{ 
+                flexGrow: 1, 
+                p: { xs: 2, md: 3 },
+                minHeight: '100vh',
+                bgcolor: '#f8fafc'
+            }}>
+                <Typography 
+                    variant="h4" 
+                    fontWeight="bold" 
+                    sx={{ 
+                        mb: 1, 
+                        color: '#1a202c',
+                        textAlign: { xs: 'center', md: 'left' },
+                        fontSize: { xs: '1.75rem', md: '2.25rem' }
+                    }}
+                >
+                    Image Generation Tasks
+                </Typography>
+                
+                <Paper sx={{ p: 4, textAlign: 'center', bgcolor: '#fee', borderColor: '#f87171' }}>
+                    <Typography variant="h6" color="error" sx={{ mb: 2 }}>
+                        Error Loading Tasks
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                        {error}
+                    </Typography>
+                    <Button 
+                        variant="contained" 
+                        onClick={() => window.location.reload()}
+                        sx={{ mt: 2 }}
+                    >
+                        Retry
+                    </Button>
+                </Paper>
+            </Box>
+        );
+    }
 
     const getImageUrl = (imageArray: Array<{ 
         id?: number;
@@ -153,11 +242,7 @@ export default function ImageGenerationDashboard() {
                 Practice creating effective DALL-E prompts and compare your results with expert examples
             </Typography>
             
-            {loading ? (
-                <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-                    <LinearProgress sx={{ width: '50%' }} />
-                </Box>
-            ) : imageTasks.length === 0 ? (
+            {imageTasks.length === 0 ? (
                 <Paper sx={{ p: 4, textAlign: 'center' }}>
                     <Typography variant="h6" color="text.secondary">
                         No image tasks available at the moment.
