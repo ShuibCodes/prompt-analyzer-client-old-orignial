@@ -13,17 +13,65 @@ export interface StreakData {
     streakPercentage: number;
 }
 
+interface CachedStreakData extends StreakData {
+    timestamp: number;
+    userId: string;
+}
+
+const CACHE_KEY = 'ppa_streak_cache';
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
+const getCachedStreakData = (userId: string): StreakData | null => {
+    try {
+        const cached = localStorage.getItem(CACHE_KEY);
+        if (!cached) return null;
+
+        const parsedCache: CachedStreakData = JSON.parse(cached);
+        
+        // Check if cache is for the same user and still valid
+        if (parsedCache.userId !== userId) {
+            localStorage.removeItem(CACHE_KEY);
+            return null;
+        }
+
+        const now = Date.now();
+        if (now - parsedCache.timestamp > CACHE_DURATION) {
+            localStorage.removeItem(CACHE_KEY);
+            return null;
+        }
+
+        // Return the streak data without the cache metadata
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { timestamp: _ts, userId: _uid, ...streakData } = parsedCache;
+        return streakData;
+    } catch (error) {
+        console.warn('Failed to read streak cache:', error);
+        localStorage.removeItem(CACHE_KEY);
+        return null;
+    }
+};
+
+const setCachedStreakData = (userId: string, streakData: StreakData): void => {
+    try {
+        const cacheData: CachedStreakData = {
+            ...streakData,
+            timestamp: Date.now(),
+            userId
+        };
+        localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData));
+    } catch (error) {
+        console.warn('Failed to cache streak data:', error);
+    }
+};
+
 export const useStreakData = () => {
     const [streakData, setStreakData] = useState<StreakData | null>(null);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(false); // Start with false since we'll try cache first
     const [error, setError] = useState<string | null>(null);
     const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
-    const fetchStreakData = async () => {
+    const fetchStreakData = async (useCache = true) => {
         try {
-            setLoading(true);
-            setError(null);
-
             const authData = SecureAuth.getAuth();
             if (!authData) {
                 console.warn('🔐 No auth data found for streak fetch');
@@ -38,19 +86,61 @@ export const useStreakData = () => {
             if (currentUserId && currentUserId !== authData.userId) {
                 console.log('👤 User changed, clearing previous streak data');
                 setStreakData(null);
+                localStorage.removeItem(CACHE_KEY);
             }
 
             setCurrentUserId(authData.userId);
-            console.log('📊 Fetching streak data for user:', authData.userId);
+
+            // Try to load from cache first
+            if (useCache) {
+                const cachedData = getCachedStreakData(authData.userId);
+                if (cachedData) {
+                    console.log('📊 Loading streak data from cache:', cachedData);
+                    setStreakData(cachedData);
+                    setError(null);
+                    setLoading(false);
+                    
+                    // Continue to fetch fresh data in background without showing loading
+                    fetchFreshData(authData.userId);
+                    return;
+                }
+            }
+
+            // No cache available, show loading and fetch
+            setLoading(true);
+            await fetchFreshData(authData.userId);
+
+        } catch (err) {
+            console.error('❌ Error in fetchStreakData:', err);
+            setError('Failed to load streak data');
+            setLoading(false);
+            
+            // Set default data on error
+            setStreakData({
+                currentStreak: 0,
+                longestStreak: 0,
+                lastActivity: null,
+                isActiveToday: false,
+                completedTasks: 0,
+                totalTasks: 0,
+                streakPercentage: 0
+            });
+        }
+    };
+
+    const fetchFreshData = async (userId: string) => {
+        try {
+            setError(null);
+            console.log('📊 Fetching fresh streak data for user:', userId);
 
             // Fetch streak data
             const [streakResponse, completedTasksResponse] = await Promise.all([
-                axios.get(`${API_BASE}/users/${authData.userId}/streak`),
-                axios.get(`${API_BASE}/users/${authData.userId}/completed-tasks`)
+                axios.get(`${API_BASE}/users/${userId}/streak`),
+                axios.get(`${API_BASE}/users/${userId}/completed-tasks`)
             ]);
 
-            console.log('🏆 Streak API Response:', streakResponse.data);
-            console.log('✅ Completed Tasks API Response:', completedTasksResponse.data);
+            console.log('🏆 Fresh Streak API Response:', streakResponse.data);
+            console.log('✅ Fresh Completed Tasks API Response:', completedTasksResponse.data);
 
             const streak = streakResponse.data.data || {
                 currentStreak: 0,
@@ -77,23 +167,28 @@ export const useStreakData = () => {
                 streakPercentage
             };
 
-            console.log('📈 Setting new streak data:', newStreakData);
+            console.log('📈 Setting fresh streak data:', newStreakData);
             setStreakData(newStreakData);
+            
+            // Cache the fresh data
+            setCachedStreakData(userId, newStreakData);
 
         } catch (err) {
-            console.error('❌ Error fetching streak data:', err);
-            setError('Failed to load streak data');
+            console.error('❌ Error fetching fresh streak data:', err);
             
-            // Set default data on error
-            setStreakData({
-                currentStreak: 0,
-                longestStreak: 0,
-                lastActivity: null,
-                isActiveToday: false,
-                completedTasks: 0,
-                totalTasks: 0,
-                streakPercentage: 0
-            });
+            // Only set error if we don't have cached data already
+            if (!streakData) {
+                setError('Failed to load streak data');
+                setStreakData({
+                    currentStreak: 0,
+                    longestStreak: 0,
+                    lastActivity: null,
+                    isActiveToday: false,
+                    completedTasks: 0,
+                    totalTasks: 0,
+                    streakPercentage: 0
+                });
+            }
         } finally {
             setLoading(false);
         }
@@ -123,14 +218,25 @@ export const useStreakData = () => {
 
     const refreshStreakData = () => {
         console.log('🔄 Refreshing streak data...');
-        fetchStreakData();
+        // Force fresh fetch without cache
+        setLoading(true);
+        const authData = SecureAuth.getAuth();
+        if (authData) {
+            fetchFreshData(authData.userId);
+        }
+    };
+
+    // Clear cache when user signs out (optional utility)
+    const clearStreakCache = () => {
+        localStorage.removeItem(CACHE_KEY);
     };
 
     return {
         streakData,
         loading,
         error,
-        refreshStreakData
+        refreshStreakData,
+        clearStreakCache
     };
 };
 

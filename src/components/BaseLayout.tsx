@@ -17,8 +17,13 @@ export default function BaseLayout({ name, onLogout, children }: BaseLayoutProps
             />
             <Box sx={{ 
                 flexGrow: 1, 
-                ml: { xs: 0, md: '260px' },
-                minHeight: '100vh'
+                // No left margin on mobile (sidebar slides over content)
+                // Left margin on desktop to account for fixed sidebar
+                ml: { xs: 0, md: '280px' },
+                // Top padding on mobile to account for hamburger menu
+                pt: { xs: '80px', md: 0 },
+                minHeight: '100vh',
+                transition: 'margin-left 0.3s ease-in-out'
             }}>
                 {children}
             </Box>

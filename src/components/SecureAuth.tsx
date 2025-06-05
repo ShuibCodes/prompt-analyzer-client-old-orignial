@@ -202,7 +202,10 @@ export class SecureAuth {
         try {
             this.storage.removeItem(CONFIG.AUTH_KEY);
             this.storage.removeItem(`${CONFIG.AUTH_KEY}_ts`);
-            console.log('Secure session cleared');
+            
+            localStorage.removeItem('ppa_streak_cache');
+            
+            console.log('Secure session and streak cache cleared');
         } catch (error) {
             console.error('Failed to clear auth data:', error);
         }
