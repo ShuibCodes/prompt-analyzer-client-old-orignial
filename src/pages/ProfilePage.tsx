@@ -7,7 +7,9 @@ import {
   Save, 
   Eye, 
   EyeOff,
-  AlertTriangle
+  AlertTriangle,
+  Bell,
+  BellOff
 } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { API_BASE, AUTH_BASE } from '../config';
@@ -25,6 +27,7 @@ interface UserProfile {
   name: string;
   email: string;
   username: string;
+  dailyEmailNotifications: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -32,7 +35,7 @@ interface UserProfile {
 const ProfilePage: React.FC<ProfilePageProps> = ({ userId, onLogout }) => {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'profile' | 'password' | 'account'>('profile');
+  const [activeTab, setActiveTab] = useState<'profile' | 'notifications' | 'password' | 'account'>('profile');
   
   // Profile form state
   const [profileForm, setProfileForm] = useState({
@@ -40,6 +43,12 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ userId, onLogout }) => {
     email: ''
   });
   const [profileLoading, setProfileLoading] = useState(false);
+  
+  // Notification preferences state
+  const [notificationForm, setNotificationForm] = useState({
+    dailyEmailNotifications: true
+  });
+  const [notificationLoading, setNotificationLoading] = useState(false);
   
   // Password form state
   const [passwordForm, setPasswordForm] = useState({
@@ -74,6 +83,9 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ userId, onLogout }) => {
           setProfileForm({
             name: data.data.name || '',
             email: data.data.email || ''
+          });
+          setNotificationForm({
+            dailyEmailNotifications: data.data.dailyEmailNotifications ?? true
           });
         } else {
           toast.error('Failed to load profile');
@@ -124,6 +136,36 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ userId, onLogout }) => {
       toast.error('Failed to update profile');
     } finally {
       setProfileLoading(false);
+    }
+  };
+
+  // Update notification preferences
+  const handleUpdateNotifications = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setNotificationLoading(true);
+
+    try {
+      const response = await fetch(`${API_BASE}/users/${userId}/notifications`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(notificationForm)
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setProfile(prev => prev ? { ...prev, dailyEmailNotifications: data.data.dailyEmailNotifications } : null);
+        toast.success('Notification preferences updated successfully!');
+      } else {
+        toast.error(data.error || 'Failed to update notification preferences');
+      }
+    } catch (error) {
+      console.error('Error updating notification preferences:', error);
+      toast.error('Failed to update notification preferences');
+    } finally {
+      setNotificationLoading(false);
     }
   };
 
@@ -273,6 +315,13 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ userId, onLogout }) => {
             Profile
           </button>
           <button 
+            className={`tab ${activeTab === 'notifications' ? 'active' : ''}`}
+            onClick={() => setActiveTab('notifications')}
+          >
+            <Bell size={20} />
+            Notifications
+          </button>
+          <button 
             className={`tab ${activeTab === 'password' ? 'active' : ''}`}
             onClick={() => setActiveTab('password')}
           >
@@ -333,6 +382,63 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ userId, onLogout }) => {
                     <>
                       <Save size={20} />
                       Update Profile
+                    </>
+                  )}
+                </button>
+              </form>
+            </div>
+          )}
+
+          {activeTab === 'notifications' && (
+            <div className="tab-content">
+              <h2>Notification Preferences</h2>
+              <form onSubmit={handleUpdateNotifications} className="profile-form">
+                <div className="notification-section">
+                  <h3>Email Notifications</h3>
+                  <p className="section-description">
+                    Choose when you'd like to receive email notifications from Prompt Pal.
+                  </p>
+                  
+                  <div className="notification-option">
+                    <div className="notification-toggle">
+                      <input
+                        type="checkbox"
+                        id="dailyEmailNotifications"
+                        checked={notificationForm.dailyEmailNotifications}
+                        onChange={(e) => setNotificationForm({ 
+                          ...notificationForm, 
+                          dailyEmailNotifications: e.target.checked 
+                        })}
+                      />
+                      <label htmlFor="dailyEmailNotifications" className="toggle-label">
+                        <div className="toggle-icon">
+                          {notificationForm.dailyEmailNotifications ? (
+                            <Bell size={20} />
+                          ) : (
+                            <BellOff size={20} />
+                          )}
+                        </div>
+                        <div className="toggle-content">
+                          <div className="toggle-title">Daily Task Notifications</div>
+                          <div className="toggle-description">
+                            Receive email notifications when new daily challenges are available
+                          </div>
+                        </div>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+
+                <button type="submit" className="btn btn-primary" disabled={notificationLoading}>
+                  {notificationLoading ? (
+                    <>
+                      <div className="btn-spinner"></div>
+                      Updating...
+                    </>
+                  ) : (
+                    <>
+                      <Save size={20} />
+                      Save Preferences
                     </>
                   )}
                 </button>
