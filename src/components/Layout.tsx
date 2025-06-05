@@ -15,7 +15,7 @@ interface UnauthenticatedLayoutProps {
     userId: string;
     name: string;
     onLogout: () => void;
-    onUserLogin: (userId: string, name: string) => void;
+    onUserLogin: (userId: string, name: string, jwt?: string) => void;
 }
 
 interface LayoutProps {
@@ -160,10 +160,10 @@ export default function Layout({ children }: LayoutProps) {
         };
     }, [userId]);
 
-    const handleUserLogin = (newUserId: string, newName: string) => {
+    const handleUserLogin = (newUserId: string, newName: string, jwt?: string) => {
         setUserId(newUserId);
         setName(newName);
-        SecureAuth.setAuth(newUserId, newName);
+        SecureAuth.setAuth(newUserId, newName, jwt);
         // Generate CSRF token for new session
         CSRFProtection.generateToken();
         

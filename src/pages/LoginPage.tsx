@@ -18,7 +18,7 @@ import {
 import { getAuthErrorMessage, getRegistrationErrorMessage } from '../utils/errorHandler';
 
 interface LoginPageProps {
-    onUserLogin: (userId: string, name: string) => void;
+    onUserLogin: (userId: string, name: string, jwt?: string) => void;
 }
 
 export default function LoginPage({ onUserLogin }: LoginPageProps) {
@@ -41,7 +41,7 @@ export default function LoginPage({ onUserLogin }: LoginPageProps) {
             if (data.success) {
                 // Clear any existing rate limits on successful login
                 clearLoginRateLimit(data.user.email);
-                onUserLogin(data.user.id, data.user.name);
+                onUserLogin(data.user.id, data.user.name, data.jwt);
                 navigate('/dashboard');
                 toast.success(`Welcome, ${data.user.name}!`, {
                     position: "top-center",
@@ -104,7 +104,7 @@ export default function LoginPage({ onUserLogin }: LoginPageProps) {
             // Clear rate limits on successful login
             clearLoginRateLimit(variables.identifier.toLowerCase());
             
-            onUserLogin(data.user.documentId, data.user.name);
+            onUserLogin(data.user.documentId, data.user.name, data.jwt);
             navigate('/dashboard');
             
             toast.success(`Welcome back, ${data.user.name}!`, {
@@ -181,7 +181,7 @@ export default function LoginPage({ onUserLogin }: LoginPageProps) {
         },
         onSuccess: (data) => {
             console.log(data.user);
-            onUserLogin(data.user.documentId, data.user.name);
+            onUserLogin(data.user.documentId, data.user.name, data.jwt);
             navigate('/dashboard');
         },
     });

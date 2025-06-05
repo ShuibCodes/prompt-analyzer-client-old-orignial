@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { Link, useLocation } from "react-router-dom";
 import {
   Zap,
   Calendar,
@@ -12,7 +13,6 @@ import {
   Menu,
   X
 } from "lucide-react";
-import { useLocation } from "react-router-dom";
 import { useStreak } from "../contexts/StreakContext";
 import "./LeftSidebar.css";
 
@@ -137,33 +137,33 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({ userName = "Regi Loshi", user
           <div className="sidebar-logo-text">Prompt Pal</div>
         </div>
         <nav className="sidebar-nav">
-          <a
+          <Link
             className={`sidebar-link${location.pathname === "/dashboard" ? " active" : ""}`}
-            href="/dashboard"
+            to="/dashboard"
             onClick={handleLinkClick}
           >
             <Zap size={24} color="#111" /> Daily Challenge
-          </a>
-          <a
+          </Link>
+          <Link
             className={`sidebar-link${location.pathname === "/calendar" ? " active" : ""}`}
-            href="/calendar"
+            to="/calendar"
             onClick={handleLinkClick}
           >
             <Calendar size={24} color="#111" /> All Challenges
-          </a>
+          </Link>
           <div className="sidebar-link" onClick={handleLinkClick}>
             <Sparkles size={24} color="#111" />
             Prompt Improver
             <span className="sidebar-badge sidebar-badge-new">NEW</span>
           </div>
-          <a
+          <Link
             className={`sidebar-link${location.pathname === "/image-generation" ? " active" : ""}`}
-            href="/image-generation"
+            to="/image-generation"
             onClick={handleLinkClick}
           >
             <Image size={24} color="#111" />
             Image Prompts
-          </a>
+          </Link>
           <div className="sidebar-link" onClick={handleLinkClick}>
             <Lightbulb size={24} color="#111" />
             Learn
@@ -250,9 +250,9 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({ userName = "Regi Loshi", user
           <div className="sidebar-user-details">
             <div className="sidebar-user-name">{userName}</div>
             <div className="sidebar-user-actions">
-              <a href="/profile" className="sidebar-user-action" onClick={handleLinkClick}>
+              <Link to="/profile" className="sidebar-user-action" onClick={handleLinkClick}>
                 <User size={16} color="#111" /> Profile
-              </a>
+              </Link>
               <div className="sidebar-user-action" onClick={() => { handleLinkClick(); onLogout(); }}>
                 <LogOut size={16} color="#111" /> Logout
               </div>

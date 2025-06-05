@@ -99,7 +99,7 @@
 .sidebar-divider {
   display: flex;
   align-items: center;
-  margin: 24px 0 16px 0;
+  margin: 24px 0 0 0;
 }
 .sidebar-divider span {
   font-size: 12px;
@@ -173,7 +173,7 @@
   background: #fff;
   border-radius: 12px;
   box-shadow: 0 4px 16px rgba(0,0,0,0.06);
-  padding: 16px;
+  padding: 0px;
   text-align: center;
   position: relative;
   overflow: hidden;

@@ -19,6 +19,7 @@ import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import CalendarPage from './pages/CalendarPage.tsx';
 import TaskPage from './pages/TaskPage';
+import ProfilePage from './pages/ProfilePage';
 
 // Theme
 const theme = createTheme({
@@ -194,6 +195,24 @@ function App() {
                                                 <TaskPage 
                                                     userId={props.userId} 
                                                     name={props.name} 
+                                                />
+                                            );
+                                        }}
+                                    </Layout>
+                                }
+                            />
+                            <Route 
+                                path="/profile" 
+                                element={
+                                    <Layout>
+                                        {(props) => {
+                                            if ('onUserLogin' in props) {
+                                                return null; // This shouldn't happen due to redirects
+                                            }
+                                            return (
+                                                <ProfilePage 
+                                                    userId={props.userId}
+                                                    onLogout={props.onLogout}
                                                 />
                                             );
                                         }}

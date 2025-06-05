@@ -6,6 +6,7 @@ interface AuthData {
     timestamp: number;
     sessionId: string;
     lastActivity: number; // Track last user activity
+    jwt?: string; // Add JWT token storage
 }
 
 // Enhanced security configuration
@@ -85,7 +86,7 @@ const detectSuspiciousActivity = (authData: AuthData): boolean => {
 export class SecureAuth {
     private static storage = CONFIG.USE_SESSION_STORAGE ? sessionStorage : localStorage;
 
-    static setAuth(userId: string, name: string): void {
+    static setAuth(userId: string, name: string, jwt?: string): void {
         // Validate inputs
         if (!userId || !name || userId.length < 3 || name.length < 1) {
             throw new Error('Invalid user credentials');
@@ -97,7 +98,8 @@ export class SecureAuth {
             name: name.trim(),
             timestamp: now,
             lastActivity: now,
-            sessionId: generateSessionId()
+            sessionId: generateSessionId(),
+            jwt: jwt?.trim() // Store JWT token if provided
         };
         
         try {
@@ -176,6 +178,11 @@ export class SecureAuth {
         }
     }
 
+    static getJWT(): string | null {
+        const auth = this.getAuth();
+        return auth?.jwt || null;
+    }
+
     private static validateAuthData(authData: unknown): authData is AuthData {
         if (!authData || typeof authData !== 'object' || authData === null) {
             return false;
@@ -247,8 +254,8 @@ export class SecureAuth {
         if (!auth) return false;
         
         try {
-            // Create new session with updated timestamp but same user data
-            this.setAuth(auth.userId, auth.name);
+            // Create new session with updated timestamp but same user data including JWT
+            this.setAuth(auth.userId, auth.name, auth.jwt);
             console.log('Session refreshed successfully');
             return true;
         } catch (error) {
