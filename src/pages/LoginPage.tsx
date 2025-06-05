@@ -30,6 +30,8 @@ export default function LoginPage({ onUserLogin }: LoginPageProps) {
         mutationFn: async (userData: {
             email: string;
             name: string;
+            firstName: string;
+            lastName: string;
             googleId: string;
         }) => {
             const response = await axios.post(`${API_BASE}/google-signin`, userData);
@@ -65,8 +67,11 @@ export default function LoginPage({ onUserLogin }: LoginPageProps) {
     const handleGoogleSuccess = (userData: {
         email: string;
         name: string;
+        firstName: string;
+        lastName: string;
         googleId: string;
     }) => {
+        console.log('📝 Sending Google user data to backend:', userData);
         googleSignIn.mutate(userData);
     };
 

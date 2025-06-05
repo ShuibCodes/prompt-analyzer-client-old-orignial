@@ -16,6 +16,7 @@ import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import type { CriteriaData } from '../types';
 import type { Image } from '../components/types';
 import { API_BASE } from '../config';
+import { useStreak } from '../contexts/StreakContext';
 
 interface CriterionResult {
     criterionId: string;
@@ -50,6 +51,7 @@ export default function TaskPage({ userId }: TaskPageProps) {
     const [showHint, setShowHint] = useState<Record<string, boolean>>({});
     const [showResults, setShowResults] = useState<Record<string, boolean>>({});
     const previousTaskResultsRef = useRef<Record<string, TaskResult>>({});
+    const { refreshStreakData } = useStreak();
 
     const taskQuery = useQuery({
         queryKey: ['task', taskId],
@@ -196,10 +198,14 @@ export default function TaskPage({ userId }: TaskPageProps) {
             [evaluatingTaskId]: true
         }));
 
+        // Refresh streak data since user completed a task
+        console.log('Task completed successfully, refreshing streak data...');
+        refreshStreakData();
+
         setEvaluatingTaskId(null);
         setSubmissionTimestamp(null);
         previousTaskResultsRef.current[evaluatingTaskId] = newResult;
-    }, [resultsQuery.data, evaluatingTaskId, submissionTimestamp]);
+    }, [resultsQuery.data, evaluatingTaskId, submissionTimestamp, refreshStreakData]);
 
     const handleSolutionSubmit = () => {
         if (!taskId || !userSolution || submitSolution.isPending || !!evaluatingTaskId) {

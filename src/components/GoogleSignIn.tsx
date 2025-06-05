@@ -5,6 +5,8 @@ interface GoogleSignInProps {
   onSuccess: (userData: {
     email: string;
     name: string;
+    firstName: string;
+    lastName: string;
     googleId: string;
   }) => void;
   onError: (error: string) => void;
@@ -13,6 +15,8 @@ interface GoogleSignInProps {
 interface GoogleUser {
   email: string;
   name: string;
+  given_name?: string;
+  family_name?: string;
   sub: string; // Google ID
 }
 
@@ -68,9 +72,24 @@ const GoogleSignIn: React.FC<GoogleSignInProps> = ({
       try {
         const decoded: GoogleUser = jwtDecode(response.credential);
         
+        // Extract first and last names with fallbacks
+        const firstName = decoded.given_name || decoded.name.split(' ')[0] || '';
+        const lastName = decoded.family_name || decoded.name.split(' ').slice(1).join(' ') || 'User';
+        
+        console.log('🔍 Google user data decoded:', {
+          email: decoded.email,
+          name: decoded.name,
+          given_name: decoded.given_name,
+          family_name: decoded.family_name,
+          firstName,
+          lastName
+        });
+        
         onSuccess({
           email: decoded.email,
           name: decoded.name,
+          firstName,
+          lastName,
           googleId: decoded.sub,
         });
       } catch (error) {

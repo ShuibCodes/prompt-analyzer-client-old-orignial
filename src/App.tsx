@@ -9,6 +9,7 @@ import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Layout from './components/Layout';
 import SecurityHeaders from './components/SecurityHeaders';
+import { StreakProvider } from './contexts/StreakContext';
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
 import ResultsPage from './pages/ResultsPage';
@@ -68,138 +69,140 @@ function App() {
             <CssBaseline enableColorScheme/>
             <SecurityHeaders />
             <QueryClientProvider client={queryClient}>
-                <Router>
-                    <Routes>
-                        <Route 
-                            path="/" 
-                            element={
-                                <Layout>
-                                    {(props) => {
-                                        if ('onUserLogin' in props) {
-                                            return <LoginPage onUserLogin={props.onUserLogin} />;
-                                        }
-                                        return null;
-                                    }}
-                                </Layout>
-                            } 
-                        />
-                        <Route 
-                            path="/login" 
-                            element={
-                                <Layout>
-                                    {(props) => {
-                                        if ('onUserLogin' in props) {
-                                            return <LoginPage onUserLogin={props.onUserLogin} />;
-                                        }
-                                        return null;
-                                    }}
-                                </Layout>
-                            } 
-                        />
-                        <Route 
-                            path="/dashboard" 
-                            element={
-                                <Layout>
-                                    {(props) => {
-                                        if ('onUserLogin' in props) {
-                                            return null; // This shouldn't happen due to redirects
-                                        }
-                                        return (
-                                            <DashboardPage 
-                                                userId={props.userId} 
-                                                name={props.name} 
-                                            />
-                                        );
-                                    }}
-                                </Layout>
-                            } 
-                        />
-                        <Route 
-                            path="/results" 
-                            element={
-                                <Layout>
-                                    {(props) => {
-                                        if ('onUserLogin' in props) {
-                                            return null; // This shouldn't happen due to redirects
-                                        }
-                                        return (
-                                            <ResultsPage 
-                                                userId={props.userId} 
-                                            />
-                                        );
-                                    }}
-                                </Layout>
-                            } 
-                        />
-                        <Route 
-                            path="/image-generation" 
-                            element={
-                                <Layout>
-                                    {(props) => {
-                                        if ('onUserLogin' in props) {
-                                            return null; // This shouldn't happen due to redirects
-                                        }
-                                        return (
-                                            <ImageGenerationDashboard />
-                                        );
-                                    }}
-                                </Layout>
-                            } 
-                        />
-                        <Route 
-                            path="/image-generation/task/:taskId" 
-                            element={
-                                <Layout>
-                                    {(props) => {
-                                        if ('onUserLogin' in props) {
-                                            return null; // This shouldn't happen due to redirects
-                                        }
-                                        return (
-                                            <ImageGenerationTask />
-                                        );
-                                    }}
-                                </Layout>
-                            } 
-                        />
-                        <Route path="/forgot-password" element={<ForgotPassword />} />
-                        <Route path="/reset-password" element={<ResetPassword />} />
-                        <Route 
-                            path="/calendar" 
-                            element={
-                                <Layout>
-                                    {(props) => {
-                                        if ('onUserLogin' in props) {
-                                            return null; // This shouldn't happen due to redirects
-                                        }
-                                        return (
-                                            <CalendarPage 
-                                                userId={props.userId}
-                                            />
-                                        );
-                                    }}
-                                </Layout>
-                            }
-                        />
-                        <Route 
-                            path="/task/:taskId" 
-                            element={
-                                <Layout>
-                                    {(props) => {
-                                        if ('onUserLogin' in props) {
-                                            return null; // This shouldn't happen due to redirects
-                                        }
-                                        return (
-                                            <TaskPage 
-                                                userId={props.userId} 
-                                                name={props.name} 
-                                            />
-                                        );
-                                    }}
-                                </Layout>
-                            }
-                        />
-                    </Routes>
-                </Router>
+                <StreakProvider>
+                    <Router>
+                        <Routes>
+                            <Route 
+                                path="/" 
+                                element={
+                                    <Layout>
+                                        {(props) => {
+                                            if ('onUserLogin' in props) {
+                                                return <LoginPage onUserLogin={props.onUserLogin} />;
+                                            }
+                                            return null;
+                                        }}
+                                    </Layout>
+                                } 
+                            />
+                            <Route 
+                                path="/login" 
+                                element={
+                                    <Layout>
+                                        {(props) => {
+                                            if ('onUserLogin' in props) {
+                                                return <LoginPage onUserLogin={props.onUserLogin} />;
+                                            }
+                                            return null;
+                                        }}
+                                    </Layout>
+                                } 
+                            />
+                            <Route 
+                                path="/dashboard" 
+                                element={
+                                    <Layout>
+                                        {(props) => {
+                                            if ('onUserLogin' in props) {
+                                                return null; // This shouldn't happen due to redirects
+                                            }
+                                            return (
+                                                <DashboardPage 
+                                                    userId={props.userId} 
+                                                    name={props.name} 
+                                                />
+                                            );
+                                        }}
+                                    </Layout>
+                                } 
+                            />
+                            <Route 
+                                path="/results" 
+                                element={
+                                    <Layout>
+                                        {(props) => {
+                                            if ('onUserLogin' in props) {
+                                                return null; // This shouldn't happen due to redirects
+                                            }
+                                            return (
+                                                <ResultsPage 
+                                                    userId={props.userId} 
+                                                />
+                                            );
+                                        }}
+                                    </Layout>
+                                } 
+                            />
+                            <Route 
+                                path="/image-generation" 
+                                element={
+                                    <Layout>
+                                        {(props) => {
+                                            if ('onUserLogin' in props) {
+                                                return null; // This shouldn't happen due to redirects
+                                            }
+                                            return (
+                                                <ImageGenerationDashboard />
+                                            );
+                                        }}
+                                    </Layout>
+                                } 
+                            />
+                            <Route 
+                                path="/image-generation/task/:taskId" 
+                                element={
+                                    <Layout>
+                                        {(props) => {
+                                            if ('onUserLogin' in props) {
+                                                return null; // This shouldn't happen due to redirects
+                                            }
+                                            return (
+                                                <ImageGenerationTask />
+                                            );
+                                        }}
+                                    </Layout>
+                                } 
+                            />
+                            <Route path="/forgot-password" element={<ForgotPassword />} />
+                            <Route path="/reset-password" element={<ResetPassword />} />
+                            <Route 
+                                path="/calendar" 
+                                element={
+                                    <Layout>
+                                        {(props) => {
+                                            if ('onUserLogin' in props) {
+                                                return null; // This shouldn't happen due to redirects
+                                            }
+                                            return (
+                                                <CalendarPage 
+                                                    userId={props.userId}
+                                                />
+                                            );
+                                        }}
+                                    </Layout>
+                                }
+                            />
+                            <Route 
+                                path="/task/:taskId" 
+                                element={
+                                    <Layout>
+                                        {(props) => {
+                                            if ('onUserLogin' in props) {
+                                                return null; // This shouldn't happen due to redirects
+                                            }
+                                            return (
+                                                <TaskPage 
+                                                    userId={props.userId} 
+                                                    name={props.name} 
+                                                />
+                                            );
+                                        }}
+                                    </Layout>
+                                }
+                            />
+                        </Routes>
+                    </Router>
+                </StreakProvider>
             </QueryClientProvider>
             <ToastContainer
                 position="top-center"

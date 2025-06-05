@@ -18,6 +18,7 @@ import type { CriteriaData } from '../types';
 import type { Image } from '../components/types';
 import './DashboardPage.css';
 import { API_BASE } from '../config';
+import { useStreak } from '../contexts/StreakContext';
 
 interface CriterionResult {
     criterionId: string;
@@ -54,6 +55,7 @@ export default function DashboardPage({ userId, name }: DashboardPageProps) {
     const [showResults, setShowResults] = useState<Record<string, boolean>>({});
     const previousTaskResultsRef = useRef<Record<string, TaskResult>>({});
     const [runTutorial, setRunTutorial] = useState(false);
+    const { refreshStreakData } = useStreak();
 
     const steps: Step[] = [
         {
@@ -233,11 +235,15 @@ export default function DashboardPage({ userId, name }: DashboardPageProps) {
             [evaluatingTaskId]: true
         }));
 
-        // UPDATED: Clear both states when processing is complete
+        
+        console.log('Task completed successfully, refreshing streak data...');
+        refreshStreakData();
+
+        
         setEvaluatingTaskId(null);
         setSubmissionTimestamp(null);
         previousTaskResultsRef.current[evaluatingTaskId] = newResult;
-    }, [resultsQuery.data, evaluatingTaskId, submissionTimestamp]);
+    }, [resultsQuery.data, evaluatingTaskId, submissionTimestamp, refreshStreakData]);
 
 
     useEffect(() => {
