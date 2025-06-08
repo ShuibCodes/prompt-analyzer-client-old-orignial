@@ -216,13 +216,28 @@ export const useStreakData = () => {
         return () => clearInterval(interval);
     }, [currentUserId]);
 
-    const refreshStreakData = () => {
+    const refreshStreakData = async () => {
         console.log('🔄 Refreshing streak data...');
-        // Force fresh fetch without cache
         setLoading(true);
         const authData = SecureAuth.getAuth();
-        if (authData) {
-            fetchFreshData(authData.userId);
+        if (!authData) {
+            setLoading(false);
+            return;
+        }
+
+        try {
+            // First, sync the streak to ensure backend is up to date
+            console.log('🔄 Syncing streak with backend...');
+            await axios.post(`${API_BASE}/users/${authData.userId}/sync-streak`);
+            
+            // Then fetch fresh data
+            await fetchFreshData(authData.userId);
+            
+            console.log('✅ Streak data refreshed successfully');
+        } catch (error) {
+            console.error('❌ Error refreshing streak data:', error);
+            // Fallback to regular fetch if sync fails
+            await fetchFreshData(authData.userId);
         }
     };
 
