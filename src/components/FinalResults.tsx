@@ -3,11 +3,11 @@ import CelebrationIcon from '@mui/icons-material/Celebration';
 import EmailIcon from '@mui/icons-material/Email';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import axios from 'axios';
-import ResultCharts from './ResultCharts';
+// import { useQuery } from '@tanstack/react-query';
+// import axios from 'axios';
+// import ResultCharts from './ResultCharts';
 import { TaskData, CriteriaData, ResultsData } from '../types';
-import { API_BASE } from '../config';
+//import { API_BASE } from '../config';
 
 interface FinalResultsProps {
   tasksMap: TaskData;
@@ -36,19 +36,19 @@ const FinalResults: React.FC<FinalResultsProps> = ({
   const handlePageChange = (_: React.ChangeEvent<unknown>, value: number) => setCurrentTaskPage(value);
 
   // Fetch average scores for comparison (excluding current user)
-  const averageScoresQuery = useQuery({
-    queryKey: ['averageScores', userId],
-    queryFn: () => axios.get(`${API_BASE}/average-scores?excludeUserId=${userId}`).then((res) => res.data.data),
-    enabled: !!userId,
-    retry: 3,
-    retryDelay: 1000,
-  });
+  // const averageScoresQuery = useQuery({
+  //   queryKey: ['averageScores', userId],
+  //   queryFn: () => axios.get(`${API_BASE}/average-scores?excludeUserId=${userId}`).then((res) => res.data.data),
+  //   enabled: !!userId,
+  //   retry: 3,
+  //   retryDelay: 1000,
+  // });
 
   // Add criterion names to the results
-  const criterionResultsWithNames = currentTask?.criterionResults?.map(criterion => ({
-    ...criterion,
-    name: criteriaData?.[criterion.criterionId]?.name || criterion.criterionId
-  })) || [];
+  // const criterionResultsWithNames = currentTask?.criterionResults?.map(criterion => ({
+  //   ...criterion,
+  //   name: criteriaData?.[criterion.criterionId]?.name || criterion.criterionId
+  // })) || [];
 
   // Get task name safely
   const getTaskName = (taskId: string) => {
