@@ -117,12 +117,12 @@ const FinalResults: React.FC<FinalResultsProps> = ({
           </Box>
 
           {/* Add the charts component */}
-          {currentTask && (
+          {/* {currentTask && (
             <ResultCharts 
               criterionResults={criterionResultsWithNames}
               averageScores={averageScoresQuery.isSuccess ? averageScoresQuery.data?.criteriaAverages : undefined}
             />
-          )}
+          )} */}
 
           {currentTask && (
             <Paper elevation={2} sx={{ p: 3, borderRadius: 3, mb: 2, bgcolor: '#fff' }}>

@@ -180,7 +180,7 @@ export default function DashboardPage({ userId, name }: DashboardPageProps) {
             return;
         }
 
-        // NEW: Check if result is from current submission using timestamp
+        // Check if result is from current submission using timestamp
         const resultTimestamp = new Date(newResult.submittedAt).getTime();
         const submissionTime = submissionTimestamp;
         

@@ -80,10 +80,10 @@ const TaskResults: React.FC<TaskResultsProps> = ({
       </Box>
 
       {/* Add the charts component with community comparison */}
-      <ResultCharts 
+      {/* <ResultCharts 
         criterionResults={criterionResultsWithNames}
         averageScores={averageScoresQuery.isSuccess ? averageScoresQuery.data?.criteriaAverages : undefined}
-      />
+      /> */}
 
       {taskResult.criterionResults.map(criterion => (
         <Box key={criterion.criterionId} sx={{ mb: 2 }}>

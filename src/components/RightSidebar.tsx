@@ -39,69 +39,6 @@ const RightSidebar: React.FC = () => {
                         3. Earn gems and track your progress!
                     </Typography>
                 </Paper>
-                <Paper elevation={2} sx={{ 
-                    p: { xs: 1.5, md: 2 }, 
-                    borderRadius: 1, 
-                    bgcolor: '#fffbe7' 
-                }}>
-                    <Typography variant="body2" fontWeight="bold" sx={{ 
-                        mb: 1,
-                        fontSize: { xs: '0.9rem', md: '1rem' }
-                    }}>
-                        Gems Remaining
-                    </Typography>
-                    <Box sx={{ 
-                        display: 'flex', 
-                        gap: 1, 
-                        mt: 1, 
-                        mb: 1 
-                    }}>
-                        <Box sx={{ 
-                            width: { xs: 24, md: 32 }, 
-                            height: { xs: 24, md: 32 }, 
-                            fontSize: { xs: 20, md: 28 }, 
-                            display: 'flex', 
-                            alignItems: 'center', 
-                            justifyContent: 'center' 
-                        }}>💎</Box>
-                        <Box sx={{ 
-                            width: { xs: 24, md: 32 }, 
-                            height: { xs: 24, md: 32 }, 
-                            fontSize: { xs: 20, md: 28 }, 
-                            display: 'flex', 
-                            alignItems: 'center', 
-                            justifyContent: 'center' 
-                        }}>💎</Box>
-                        <Box sx={{ 
-                            width: { xs: 24, md: 32 }, 
-                            height: { xs: 24, md: 32 }, 
-                            fontSize: { xs: 20, md: 28 }, 
-                            display: 'flex', 
-                            alignItems: 'center', 
-                            justifyContent: 'center' 
-                        }}>💎</Box>
-                        <Box sx={{ 
-                            width: { xs: 24, md: 32 }, 
-                            height: { xs: 24, md: 32 }, 
-                            fontSize: { xs: 20, md: 28 }, 
-                            display: 'flex', 
-                            alignItems: 'center', 
-                            justifyContent: 'center' 
-                        }}>🔮</Box>
-                    </Box>
-                    <Button 
-                        variant="text" 
-                        color="warning" 
-                        sx={{ 
-                            p: 0, 
-                            minWidth: 0, 
-                            fontWeight: 700,
-                            fontSize: { xs: '0.8rem', md: '0.875rem' }
-                        }}
-                    >
-                        Get Unlimited Gems
-                    </Button>
-                </Paper>
             </Box>
         </Box>
     );

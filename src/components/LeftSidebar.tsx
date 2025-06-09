@@ -6,12 +6,12 @@ import {
   Sparkles,
   Image,
   Lightbulb,
-  Award,
   User,
   LogOut,
   ExternalLink,
   Menu,
-  X
+  X,
+  Users
 } from "lucide-react";
 import { useStreak } from "../contexts/StreakContext";
 import "./LeftSidebar.css";
@@ -102,13 +102,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({ userName = "Regi Loshi", user
     }
   };
 
-  const getChallengesBadgeColor = (completed: number) => {
-    if (completed === 0) return "#6b7280";
-    if (completed >= 50) return "#f59e0b";
-    if (completed >= 20) return "#8b5cf6";
-    if (completed >= 10) return "#3b82f6";
-    return "#10b981";
-  };
+
 
   return (
     <>
@@ -151,11 +145,6 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({ userName = "Regi Loshi", user
           >
             <Calendar size={24} color="#111" /> All Challenges
           </Link>
-          <div className="sidebar-link" onClick={handleLinkClick}>
-            <Sparkles size={24} color="#111" />
-            Prompt Improver
-            <span className="sidebar-badge sidebar-badge-new">NEW</span>
-          </div>
           <Link
             className={`sidebar-link${location.pathname === "/image-generation" ? " active" : ""}`}
             to="/image-generation"
@@ -164,13 +153,6 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({ userName = "Regi Loshi", user
             <Image size={24} color="#111" />
             Image Prompts
           </Link>
-          <div className="sidebar-link" onClick={handleLinkClick}>
-            <Lightbulb size={24} color="#111" />
-            Learn
-            <span className="sidebar-badge sidebar-badge-explore">
-              Explore <ExternalLink size={14} color="#111" style={{ marginLeft: 4 }} />
-            </span>
-          </div>
         </nav>
         <div className="sidebar-stats">
           <div className="sidebar-divider">
@@ -206,43 +188,26 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({ userName = "Regi Loshi", user
               </>
             )}
           </div>
-          
-          {/* Dynamic Challenges Section */}
-          <div className="sidebar-challenges">
-            <Award size={48} color="#111" />
-            <span 
-              className="sidebar-challenges-badge"
-              style={{ 
-                backgroundColor: getChallengesBadgeColor(streakData?.completedTasks || 0),
-                color: 'white'
-              }}
-            >
-              {loading ? "..." : (streakData?.completedTasks || 0)}
-            </span>
-            <span>
-              {loading ? "Loading..." : 
-               (streakData?.completedTasks || 0) === 1 ? "Challenge Completed!" :
-               "Challenges Completed!"}
-            </span>
-            {!loading && streakData && streakData.completedTasks > 0 && (
-              <div style={{ 
-                fontSize: '11px', 
-                color: '#6b7280', 
-                marginTop: '2px' 
-              }}>
-                {streakData.completedTasks >= 50 ? "Master Prompter! 🏆" :
-                 streakData.completedTasks >= 20 ? "Expert Level! 💎" :
-                 streakData.completedTasks >= 10 ? "Getting good! 🚀" :
-                 streakData.completedTasks >= 5 ? "Nice progress! ⭐" :
-                 "Keep it up! 💪"}
-              </div>
-            )}
-          </div>
         </div>
-        <div className="sidebar-promo">
-          <div className="sidebar-promo-content">
-            <span className="sidebar-promo-title">Become a Super Learner</span>
-            <button className="sidebar-promo-btn">Try for 7 Days Free</button>
+        <div className="sidebar-community">
+          <div className="sidebar-community-content">
+            <div className="sidebar-community-header">
+              <Users size={20} color="#6366f1" />
+              <span className="sidebar-community-title">Join Our Community</span>
+            </div>
+            <p className="sidebar-community-description">
+              Connect with like-minded learners and get access to exclusive resources
+            </p>
+            <a 
+              href="https://www.skool.com/pivot2tech/" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="sidebar-community-btn"
+            >
+              <Users size={16} />
+              Join Community
+              <ExternalLink size={14} />
+            </a>
           </div>
         </div>
         <div className="sidebar-user">
