@@ -1,10 +1,10 @@
 import { Box, Typography, LinearProgress, Button } from '@mui/material';
 import React from 'react';
-import { useQuery } from '@tanstack/react-query';
-import axios from 'axios';
-import ResultCharts from './ResultCharts';
+// import { useQuery } from '@tanstack/react-query';
+// import axios from 'axios';
+// import ResultCharts from './ResultCharts';
 import { TaskResult, CriteriaData } from '../types';
-import { API_BASE } from '../config';
+// import { API_BASE } from '../config';
 
 interface TaskResultsProps {
   taskResult: TaskResult;
@@ -23,7 +23,7 @@ const TaskResults: React.FC<TaskResultsProps> = ({
   onNextTask,
   onSendEmail,
   isSendingEmail,
-  userId
+  // userId
 }) => {
   const totalScore = taskResult.criterionResults.reduce(
     (sum, criterion) => sum + criterion.score, 0
@@ -32,19 +32,19 @@ const TaskResults: React.FC<TaskResultsProps> = ({
   const percentageScore = Math.round((totalScore / maxPossibleScore) * 100);
 
   // Fetch average scores for comparison (excluding current user)
-  const averageScoresQuery = useQuery({
-    queryKey: ['averageScores', userId],
-    queryFn: () => axios.get(`${API_BASE}/average-scores?excludeUserId=${userId}`).then((res) => res.data.data),
-    enabled: !!userId,
-    retry: 3,
-    retryDelay: 1000,
-  });
+  // const averageScoresQuery = useQuery({
+  //   queryKey: ['averageScores', userId],
+  //   queryFn: () => axios.get(`${API_BASE}/average-scores?excludeUserId=${userId}`).then((res) => res.data.data),
+  //   enabled: !!userId,
+  //   retry: 3,
+  //   retryDelay: 1000,
+  // });
 
   // Add criterion names to the results
-  const criterionResultsWithNames = taskResult.criterionResults.map(criterion => ({
-    ...criterion,
-    name: criteriaData?.[criterion.criterionId]?.name || criterion.criterionId
-  }));
+  // const criterionResultsWithNames = taskResult.criterionResults.map(criterion => ({
+  //   ...criterion,
+  //   name: criteriaData?.[criterion.criterionId]?.name || criterion.criterionId
+  // }));
 
   return (
     <Box className="results-section" sx={{ mt: 4 }}>
