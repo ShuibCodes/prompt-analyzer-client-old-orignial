@@ -196,7 +196,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({ userName = "Regi Loshi", user
               <span className="sidebar-community-title">Join Our Community</span>
             </div>
             <p className="sidebar-community-description">
-              Connect with like-minded learners and get access to exclusive resources
+              Connect with over 400+ like-minded learners and get access to exclusive resources
             </p>
             <a 
               href="https://www.skool.com/pivot2tech/" 
