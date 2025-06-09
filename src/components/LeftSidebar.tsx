@@ -3,9 +3,9 @@ import { Link, useLocation } from "react-router-dom";
 import {
   Zap,
   Calendar,
-  Sparkles,
+  // Sparkles,
   Image,
-  Lightbulb,
+  // Lightbulb,
   User,
   LogOut,
   ExternalLink,

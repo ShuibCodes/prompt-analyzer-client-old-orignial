@@ -1,4 +1,4 @@
-import { Box, Paper, Typography, Button } from '@mui/material';
+import { Box, Paper, Typography/*, Button*/ } from '@mui/material';
 import React from 'react';
 
 const RightSidebar: React.FC = () => {

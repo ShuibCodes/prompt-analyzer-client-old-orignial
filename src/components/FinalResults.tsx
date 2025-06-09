@@ -26,7 +26,7 @@ const FinalResults: React.FC<FinalResultsProps> = ({
   onSendEmail, 
   isSendingEmail, 
   onRestartQuiz,
-  userId
+  // userId
 }) => {
   const finalScore = resultsData?.score ?? 0;
   const scoreColor = finalScore >= 4 ? '#43a047' : finalScore >= 2.5 ? '#ffa000' : '#e53935';
