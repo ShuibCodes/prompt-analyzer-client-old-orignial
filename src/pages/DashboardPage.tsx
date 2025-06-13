@@ -19,6 +19,7 @@ import type { Image } from '../components/types';
 import './DashboardPage.css';
 import { API_BASE } from '../config';
 import { useStreak } from '../contexts/StreakContext';
+import PromptPal from '../../src/utils/Images/prompt-pal-logo.png'
 
 interface CriterionResult {
     criterionId: string;
@@ -311,9 +312,7 @@ export default function DashboardPage({ userId, name }: DashboardPageProps) {
                     {/* Header Bar */}
                     <Box className="dashboard-loading-header">
                         <EmojiEventsIcon className="dashboard-loading-icon" />
-                        <Typography variant="h6" className="dashboard-loading-title">
-                            Prompt Pal
-                        </Typography>
+                        <img src={PromptPal} alt="Prompt Pal Logo" style={{ height: 36, marginLeft: 8 }} />
                     </Box>
                     
                     {/* Loading Content */}
@@ -375,9 +374,7 @@ export default function DashboardPage({ userId, name }: DashboardPageProps) {
                 {/* Header Bar */}
                 <Box className="dashboard-header">
                     <EmojiEventsIcon className="dashboard-header-icon" />
-                    <Typography variant="h6" className="dashboard-header-title">
-                        Prompt Pal
-                    </Typography>
+                    <img src={PromptPal} alt="Prompt Pal Logo" style={{ height: 32, marginLeft: 8 }} />
                 </Box>
                 {/* Motivational Message */}
                 <Typography className="dashboard-motivational-message">

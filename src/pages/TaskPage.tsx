@@ -17,6 +17,7 @@ import type { CriteriaData } from '../types';
 import type { Image } from '../components/types';
 import { API_BASE } from '../config';
 import { useStreak } from '../contexts/StreakContext';
+import PromptPal from '../utils/Images/prompt-pal-logo.png'
 
 interface CriterionResult {
     criterionId: string;
@@ -243,9 +244,7 @@ export default function TaskPage({ userId }: TaskPageProps) {
                 <Box className="dashboard-loading-content">
                     <Box className="dashboard-loading-header">
                         <EmojiEventsIcon className="dashboard-loading-icon" />
-                        <Typography variant="h6" className="dashboard-loading-title">
-                            Prompt Pal
-                        </Typography>
+                        <img src={PromptPal} alt="Prompt Pal Logo" style={{ height: 24, marginLeft: 8 }} />
                     </Box>
                     
                     <Box className="dashboard-loading-container">
@@ -303,9 +302,7 @@ export default function TaskPage({ userId }: TaskPageProps) {
             <Box className="dashboard-main-content">
                 <Box className="dashboard-header">
                     <EmojiEventsIcon className="dashboard-header-icon" />
-                    <Typography variant="h6" className="dashboard-header-title">
-                        Prompt Pal
-                    </Typography>
+                    <img src={PromptPal} alt="Prompt Pal Logo" style={{ height: 24, marginLeft: 8 }} />
                 </Box>
                 <Typography className="dashboard-motivational-message">
                     Ready for today's challenge? Let's get creative!

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
+import PromptPal from '../utils/Images/prompt-pal-logo.png'
 import {
   Zap,
   Calendar,
@@ -128,7 +129,7 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({ userName = "Regi Loshi", user
         className={`sidebar-fixed ${isMobile ? (isMobileMenuOpen ? 'mobile-open' : 'mobile-closed') : ''}`}
       >
         <div className="sidebar-logo-wrap">
-          <div className="sidebar-logo-text">Prompt Pal</div>
+          <img src={PromptPal} alt="Prompt Pal Logo" className="sidebar-logo" style={{ height: 58 }} />
         </div>
         <nav className="sidebar-nav">
           <Link
