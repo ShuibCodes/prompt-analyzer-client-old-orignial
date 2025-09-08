@@ -24,7 +24,7 @@ interface TaskResultsProps {
   taskName?: string;
 }
 
-const TaskResults: React.FC<TaskResultsProps> = ({ 
+const EnhancedTaskResults: React.FC<TaskResultsProps> = ({ 
   taskResult, 
   criteriaData, 
   currentAttempts, 
@@ -329,4 +329,4 @@ const TaskResults: React.FC<TaskResultsProps> = ({
   );
 };
 
-export default TaskResults;
+export default EnhancedTaskResults;

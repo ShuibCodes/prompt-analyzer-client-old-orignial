@@ -23,7 +23,7 @@ interface LeftSidebarProps {
   onLogout: () => void;
 }
 
-const LeftSidebar: React.FC<LeftSidebarProps> = ({ 
+const EnhancedLeftSidebar: React.FC<LeftSidebarProps> = ({ 
   userName = "User", 
   userInitials = "U", 
   onLogout 
@@ -632,4 +632,4 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
   );
 };
 
-export default LeftSidebar;
+export default EnhancedLeftSidebar;
