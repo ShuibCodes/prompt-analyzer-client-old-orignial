@@ -13,12 +13,15 @@ import TaskHint from '../components/TaskHint';
 import TaskResults from '../components/TaskResults';
 import TaskSubmission from '../components/TaskSubmission';
 import QuickStreakNotification from '../components/QuickStreakNotification';
+import MobileDashboard from '../components/MobileDashboard';
+import { useSwipeGestures } from '../hooks/useSwipeGestures';
 import { convertArrayToObject } from '../utils';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import type { CriteriaData } from '../types';
 import type { Image } from '../components/types';
 import './DashboardPage.css';
 import '../components/MobileDashboard.css';
+import '../styles/swipeAnimations.css';
 import { API_BASE } from '../config';
 import { useStreak } from '../contexts/StreakContext';
 import PromptPal from '../utils/Images/prompt-pal-logo.png';
@@ -68,8 +71,33 @@ export default function DashboardPage({ userId, name }: DashboardPageProps) {
     const [lastCompletedScore, setLastCompletedScore] = useState<number>(0);
     const [previousStreakData, setPreviousStreakData] = useState<unknown>(null);
     const [isNewStreakRecord, setIsNewStreakRecord] = useState(false);
+    const [isMobileEnhanced] = useState(true);
     
     const { streakData, refreshStreakData } = useStreak();
+
+    // Add swipe gestures for the main task container (fallback mode)
+    const taskSwipeProps = useSwipeGestures({
+        onSwipeLeft: () => {
+            if (currentTaskIndex < (tasksQuery.data?.length || 0) - 1) {
+                setCurrentTaskIndex(prev => prev + 1);
+            }
+        },
+        onSwipeRight: () => {
+            if (currentTaskIndex > 0) {
+                setCurrentTaskIndex(prev => prev - 1);
+            }
+        },
+        onSwipeUp: () => {
+            // Show hint if available
+            if (canShowHint && task) {
+                setShowHint(prev => ({
+                    ...prev,
+                    [task.id]: !prev[task.id]
+                }));
+            }
+        },
+        threshold: 80,
+    });
 
     // Tutorial steps
     const steps: Step[] = [
@@ -378,60 +406,94 @@ export default function DashboardPage({ userId, name }: DashboardPageProps) {
         );
     }
 
-    return (
-        <>
-            <Box className={isMobile ? 'mobile-dashboard-container' : 'dashboard-main-content'}>
-                {/* Adaptive Header */}
-                <Box className={isMobile ? 'mobile-dashboard-header' : 'dashboard-header'}>
-                    <EmojiEventsIcon className="dashboard-header-icon" />
-                    <img src={PromptPal} alt="Prompt Pal Logo" style={{ height: isMobile ? 28 : 32, marginLeft: 8 }} />
-                    {isMobile && (
+    // Enhanced Mobile Dashboard (new swipe-enabled version)
+    if (isMobile && isMobileEnhanced && tasksQuery.data) {
+        return (
+            <MobileDashboard
+                tasks={tasksQuery.data.map((taskItem: {
+                    id: string;
+                    name: string;
+                    question: string;
+                    Image?: Array<{
+                        imageQuestion?: {
+                            formats?: {
+                                thumbnail?: { url: string };
+                            };
+                        };
+                    }>;
+                }) => ({
+                    id: taskItem.id,
+                    name: taskItem.name,
+                    question: taskItem.question,
+                    difficulty: 'medium' as const, // You can derive this from your task data
+                    completed: !!currentTaskResult?.criterionResults?.length,
+                    score: currentTaskResult ? Math.round(
+                        (currentTaskResult.criterionResults.reduce((sum: number, c: CriterionResult) => sum + c.score, 0) / 
+                         (currentTaskResult.criterionResults.length * 5)) * 100
+                    ) : undefined,
+                    Image: taskItem.Image
+                }))}
+                currentTaskIndex={currentTaskIndex}
+                onTaskChange={setCurrentTaskIndex}
+                onTaskSelect={(selectedTask) => {
+                    // Navigate to the selected task or trigger task selection
+                    console.log('Selected task:', selectedTask);
+                    // You could navigate to a detailed task view if needed
+                    // navigate(`/task/${selectedTask.id}`);
+                }}
+                streakData={streakData || undefined}
+            />
+        );
+    }
+
+    // Fallback: Enhanced existing mobile layout with basic swipe gestures
+    if (isMobile) {
+        return (
+            <>
+                <Box className="mobile-dashboard-container">
+                    {/* Adaptive Header */}
+                    <Box className="mobile-dashboard-header">
+                        <EmojiEventsIcon className="dashboard-header-icon" />
+                        <img src={PromptPal} alt="Prompt Pal Logo" style={{ height: 28, marginLeft: 8 }} />
                         <Typography className="mobile-dashboard-subtitle">
                             Ready for today's challenge?
                         </Typography>
+                    </Box>
+
+                    {/* Mobile Stats Bar */}
+                    {streakData && (
+                        <div className="mobile-stats-bar">
+                            <div className="mobile-stat-card" style={{ '--accent-color': '#ef4444' } as React.CSSProperties}>
+                                <span className="mobile-stat-icon">🔥</span>
+                                <div className="mobile-stat-value">{streakData.currentStreak}</div>
+                                <div className="mobile-stat-label">Day Streak</div>
+                            </div>
+                            <div className="mobile-stat-card" style={{ '--accent-color': '#22c55e' } as React.CSSProperties}>
+                                <span className="mobile-stat-icon">🏆</span>
+                                <div className="mobile-stat-value">{streakData.longestStreak}</div>
+                                <div className="mobile-stat-label">Best</div>
+                            </div>
+                            <div className="mobile-stat-card" style={{ '--accent-color': '#3b82f6' } as React.CSSProperties}>
+                                <span className="mobile-stat-icon">📝</span>
+                                <div className="mobile-stat-value">{streakData.completedTasks}</div>
+                                <div className="mobile-stat-label">Total</div>
+                            </div>
+                        </div>
                     )}
-                </Box>
 
-                {/* Mobile Stats Bar */}
-                {isMobile && streakData && (
-                    <div className="mobile-stats-bar">
-                        <div className="mobile-stat-card" style={{ '--accent-color': '#ef4444' } as React.CSSProperties}>
-                            <span className="mobile-stat-icon">🔥</span>
-                            <div className="mobile-stat-value">{streakData.currentStreak}</div>
-                            <div className="mobile-stat-label">Day Streak</div>
-                        </div>
-                        <div className="mobile-stat-card" style={{ '--accent-color': '#22c55e' } as React.CSSProperties}>
-                            <span className="mobile-stat-icon">🏆</span>
-                            <div className="mobile-stat-value">{streakData.longestStreak}</div>
-                            <div className="mobile-stat-label">Best</div>
-                        </div>
-                        <div className="mobile-stat-card" style={{ '--accent-color': '#3b82f6' } as React.CSSProperties}>
-                            <span className="mobile-stat-icon">📝</span>
-                            <div className="mobile-stat-value">{streakData.completedTasks}</div>
-                            <div className="mobile-stat-label">Total</div>
-                        </div>
-                    </div>
-                )}
-
-                {/* Desktop Motivational Message */}
-                {!isMobile && (
-                    <>
-                        <Typography className="dashboard-motivational-message">
-                            Ready for today's challenge? Let's get creative!
-                        </Typography>
-                        <Box className="dashboard-decorative-icon-container">
-                            <EmojiEventsIcon className="dashboard-decorative-icon" />
-                        </Box>
-                    </>
-                )}
-
-                {/* Task Content */}
-                <Paper 
-                    elevation={3} 
-                    className={isMobile ? 'mobile-task-card task-content' : 'dashboard-task-paper task-content'}
-                >
-                    {/* Mobile Task Header */}
-                    {isMobile && (
+                    {/* Enhanced Task Card with Swipe Gestures */}
+                    <Paper 
+                        elevation={3} 
+                        className="mobile-task-card task-content swipe-container"
+                        {...taskSwipeProps}
+                        sx={{
+                            // Add visual feedback for swiping
+                            transform: taskSwipeProps.isSwiping ? 'scale(1.02)' : 'scale(1)',
+                            transition: taskSwipeProps.isSwiping ? 'none' : 'transform 0.2s ease',
+                            touchAction: 'pan-y', // Allow vertical scroll, capture horizontal
+                        }}
+                    >
+                        {/* Mobile Task Header with Swipe Indicators */}
                         <div className="mobile-task-header">
                             <div className="mobile-task-icon">
                                 <EmojiEventsIcon />
@@ -442,159 +504,239 @@ export default function DashboardPage({ userId, name }: DashboardPageProps) {
                             <div className="mobile-task-difficulty difficulty-medium">
                                 Daily
                             </div>
+                            
+                            {/* Add swipe instruction overlay for first-time users */}
+                            {currentAttempts === 0 && (
+                                <Box sx={{
+                                    position: 'absolute',
+                                    top: 8,
+                                    right: 8,
+                                    background: 'rgba(102, 126, 234, 0.9)',
+                                    color: 'white',
+                                    borderRadius: 2,
+                                    px: 1,
+                                    py: 0.5,
+                                    fontSize: '0.7rem',
+                                    animation: 'pulse 2s infinite',
+                                }}>
+                                    ← → Swipe • ↑ Hint
+                                </Box>
+                            )}
                         </div>
-                    )}
 
-                    {/* Desktop Task Title */}
-                    {!isMobile && (
-                        <Typography variant="h6" className="dashboard-task-title">
-                            Task {currentTaskIndex + 1}: {task?.name}
-                        </Typography>
-                    )}
+                        {/* Mobile Task Content */}
+                        <div className="mobile-task-content">
+                            <Typography 
+                                component="p" 
+                                className="mobile-task-question"
+                            >
+                                {task?.question}
+                            </Typography>
 
-                    <div className={isMobile ? 'mobile-task-content' : ''}>
-                        <Typography 
-                            component="p" 
-                            className={isMobile ? 'mobile-task-question' : 'dashboard-task-question'}
-                        >
-                            {task?.question}
-                        </Typography>
+                            {task?.Image?.length > 0 && (
+                                <Box className="mobile-task-images">
+                                    {task.Image.map((img: Image, idx: number) => (
+                                        <Box key={idx} className="mobile-task-image">
+                                            <TaskImage image={img} />
+                                        </Box>
+                                    ))}
+                                </Box>
+                            )}
 
-                        {task?.Image?.length > 0 && (
-                            <Box className={isMobile ? 'mobile-task-images' : 'dashboard-task-images'}>
-                                {task.Image.map((img: Image, idx: number) => (
-                                    <Box key={idx} className={isMobile ? 'mobile-task-image' : 'dashboard-task-image-container'}>
-                                        <TaskImage image={img} />
-                                    </Box>
-                                ))}
-                            </Box>
-                        )}
+                            {canShowHint && (
+                                <TaskHint 
+                                    task={task}
+                                    showHint={showHint[task?.id]}
+                                    onToggleHint={() => setShowHint(prev => ({
+                                        ...prev,
+                                        [task?.id]: !prev[task?.id]
+                                    }))}
+                                />
+                            )}
 
-                        {canShowHint && (
-                            <TaskHint 
-                                task={task}
-                                showHint={showHint[task?.id]}
-                                onToggleHint={() => setShowHint(prev => ({
-                                    ...prev,
-                                    [task?.id]: !prev[task?.id]
-                                }))}
+                            <TaskSubmission 
+                                userSolution={userSolution}
+                                onSolutionChange={(value) => setUserSolutions(prev => ({ ...prev, [task?.id]: value }))}
+                                onSubmit={handleSolutionSubmit}
+                                isEvaluating={!!evaluatingTaskId && !!submissionTimestamp}
                             />
-                        )}
 
-                        <TaskSubmission 
-                            userSolution={userSolution}
-                            onSolutionChange={(value) => setUserSolutions(prev => ({ ...prev, [task?.id]: value }))}
-                            onSubmit={handleSolutionSubmit}
-                            isEvaluating={!!evaluatingTaskId && !!submissionTimestamp}
+                            {shouldShowResults && (
+                                <TaskResults 
+                                    taskResult={currentTaskResult}
+                                    criteriaData={criteriaQuery.data as CriteriaData || {}}
+                                    currentAttempts={currentAttempts}
+                                    onNextTask={() => setCurrentTaskIndex(prev => prev + 1)}
+                                    userId={userId}
+                                />
+                            )}
+                        </div>
+                    </Paper>
+                </Box>
+
+                {/* Mobile Quick Notification with enhanced animations */}
+                <QuickStreakNotification
+                    open={showQuickNotification}
+                    onClose={() => setShowQuickNotification(false)}
+                    streakData={streakData}
+                    taskScore={lastCompletedScore}
+                    isNewRecord={isNewStreakRecord}
+                    autoHideDuration={4000}
+                />
+            </>
+        );
+    }
+
+    // Desktop Layout
+    return (
+        <>
+            <Box className="dashboard-main-content">
+                {/* Desktop Header */}
+                <Box className="dashboard-header">
+                    <EmojiEventsIcon className="dashboard-header-icon" />
+                    <img src={PromptPal} alt="Prompt Pal Logo" style={{ height: 32, marginLeft: 8 }} />
+                </Box>
+
+                {/* Desktop Motivational Message */}
+                <Typography className="dashboard-motivational-message">
+                    Ready for today's challenge? Let's get creative!
+                </Typography>
+                <Box className="dashboard-decorative-icon-container">
+                    <EmojiEventsIcon className="dashboard-decorative-icon" />
+                </Box>
+
+                {/* Desktop Task Content */}
+                <Paper elevation={3} className="dashboard-task-paper task-content">
+                    <Typography variant="h6" className="dashboard-task-title">
+                        Task {currentTaskIndex + 1}: {task?.name}
+                    </Typography>
+
+                    <Typography component="p" className="dashboard-task-question">
+                        {task?.question}
+                    </Typography>
+
+                    {task?.Image?.length > 0 && (
+                        <Box className="dashboard-task-images">
+                            {task.Image.map((img: Image, idx: number) => (
+                                <Box key={idx} className="dashboard-task-image-container">
+                                    <TaskImage image={img} />
+                                </Box>
+                            ))}
+                        </Box>
+                    )}
+
+                    {canShowHint && (
+                        <TaskHint 
+                            task={task}
+                            showHint={showHint[task?.id]}
+                            onToggleHint={() => setShowHint(prev => ({
+                                ...prev,
+                                [task?.id]: !prev[task?.id]
+                            }))}
                         />
+                    )}
 
-                        {shouldShowResults && (
-                            <TaskResults 
-                                taskResult={currentTaskResult}
-                                criteriaData={criteriaQuery.data as CriteriaData || {}}
-                                currentAttempts={currentAttempts}
-                                onNextTask={() => setCurrentTaskIndex(prev => prev + 1)}
-                                userId={userId}
-                            />
-                        )}
-                    </div>
+                    <TaskSubmission 
+                        userSolution={userSolution}
+                        onSolutionChange={(value) => setUserSolutions(prev => ({ ...prev, [task?.id]: value }))}
+                        onSubmit={handleSolutionSubmit}
+                        isEvaluating={!!evaluatingTaskId && !!submissionTimestamp}
+                    />
+
+                    {shouldShowResults && (
+                        <TaskResults 
+                            taskResult={currentTaskResult}
+                            criteriaData={criteriaQuery.data as CriteriaData || {}}
+                            currentAttempts={currentAttempts}
+                            onNextTask={() => setCurrentTaskIndex(prev => prev + 1)}
+                            userId={userId}
+                        />
+                    )}
                 </Paper>
             </Box>
             
-            {!isMobile && <RightSidebar />}
+            <RightSidebar />
 
-            {/* Mobile Quick Notification */}
-            <QuickStreakNotification
-                open={showQuickNotification}
-                onClose={() => setShowQuickNotification(false)}
-                streakData={streakData}
-                taskScore={lastCompletedScore}
-                isNewRecord={isNewStreakRecord}
-                autoHideDuration={4000}
+            {/* Desktop Tutorial */}
+            <Joyride
+                steps={steps}
+                run={runTutorial}
+                continuous
+                showProgress
+                showSkipButton
+                callback={handleJoyrideCallback}
+                styles={{
+                    options: {
+                        primaryColor: '#ff9800',
+                        zIndex: 10000,
+                        backgroundColor: '#fff',
+                        textColor: '#333',
+                        arrowColor: '#fff',
+                        overlayColor: 'rgba(0, 0, 0, 0.5)',
+                    },
+                    tooltipContainer: {
+                        textAlign: 'left',
+                        maxWidth: 420,
+                    },
+                    tooltip: {
+                        backgroundColor: '#fff',
+                        borderRadius: 20,
+                        padding: '28px 32px',
+                        fontSize: '1.05rem',
+                        boxShadow: '0 8px 32px rgba(255, 152, 0, 0.18), 0 2px 12px rgba(0,0,0,0.10)',
+                        border: '3px solid #ffb300',
+                        position: 'relative',
+                        outline: 'none',
+                        transition: 'box-shadow 0.2s',
+                    },
+                    tooltipTitle: {
+                        fontSize: '1.3rem',
+                        fontWeight: 700,
+                        marginBottom: 14,
+                        color: '#ff9800',
+                    },
+                    tooltipContent: {
+                        fontSize: '1.05rem',
+                        lineHeight: 1.7,
+                        color: '#333',
+                    },
+                    buttonNext: {
+                        backgroundColor: '#ff9800',
+                        color: '#fff',
+                        fontSize: '1rem',
+                        padding: '10px 28px',
+                        borderRadius: 8,
+                        fontWeight: 600,
+                        textTransform: 'none',
+                        boxShadow: '0 2px 8px rgba(255, 152, 0, 0.18)',
+                        border: 'none',
+                        marginLeft: 8,
+                        transition: 'background 0.2s',
+                    },
+                    buttonBack: {
+                        color: '#ff9800',
+                        background: 'none',
+                        fontWeight: 500,
+                        marginRight: 8,
+                        fontSize: '1rem',
+                        textTransform: 'none',
+                        border: 'none',
+                    },
+                    buttonSkip: {
+                        color: '#666',
+                        background: 'none',
+                        fontSize: '1rem',
+                        textTransform: 'none',
+                        border: 'none',
+                    },
+                    overlay: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                    },
+                    spotlight: {
+                        backgroundColor: 'transparent',
+                    },
+                }}
             />
-
-            {/* Original Tutorial - Desktop Only */}
-            {!isMobile && (
-                <Joyride
-                    steps={steps}
-                    run={runTutorial}
-                    continuous
-                    showProgress
-                    showSkipButton
-                    callback={handleJoyrideCallback}
-                    styles={{
-                        options: {
-                            primaryColor: '#ff9800',
-                            zIndex: 10000,
-                            backgroundColor: '#fff',
-                            textColor: '#333',
-                            arrowColor: '#fff',
-                            overlayColor: 'rgba(0, 0, 0, 0.5)',
-                        },
-                        tooltipContainer: {
-                            textAlign: 'left',
-                            maxWidth: 420,
-                        },
-                        tooltip: {
-                            backgroundColor: '#fff',
-                            borderRadius: 20,
-                            padding: '28px 32px',
-                            fontSize: '1.05rem',
-                            boxShadow: '0 8px 32px rgba(255, 152, 0, 0.18), 0 2px 12px rgba(0,0,0,0.10)',
-                            border: '3px solid #ffb300',
-                            position: 'relative',
-                            outline: 'none',
-                            transition: 'box-shadow 0.2s',
-                        },
-                        tooltipTitle: {
-                            fontSize: '1.3rem',
-                            fontWeight: 700,
-                            marginBottom: 14,
-                            color: '#ff9800',
-                        },
-                        tooltipContent: {
-                            fontSize: '1.05rem',
-                            lineHeight: 1.7,
-                            color: '#333',
-                        },
-                        buttonNext: {
-                            backgroundColor: '#ff9800',
-                            color: '#fff',
-                            fontSize: '1rem',
-                            padding: '10px 28px',
-                            borderRadius: 8,
-                            fontWeight: 600,
-                            textTransform: 'none',
-                            boxShadow: '0 2px 8px rgba(255, 152, 0, 0.18)',
-                            border: 'none',
-                            marginLeft: 8,
-                            transition: 'background 0.2s',
-                        },
-                        buttonBack: {
-                            color: '#ff9800',
-                            background: 'none',
-                            fontWeight: 500,
-                            marginRight: 8,
-                            fontSize: '1rem',
-                            textTransform: 'none',
-                            border: 'none',
-                        },
-                        buttonSkip: {
-                            color: '#666',
-                            background: 'none',
-                            fontSize: '1rem',
-                            textTransform: 'none',
-                            border: 'none',
-                        },
-                        overlay: {
-                            backgroundColor: 'rgba(0, 0, 0, 0.5)',
-                        },
-                        spotlight: {
-                            backgroundColor: 'transparent',
-                        },
-                    }}
-                />
-            )}
         </>
     );
 }
