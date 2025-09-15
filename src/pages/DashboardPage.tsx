@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
@@ -14,6 +14,8 @@ import TaskResults from '../components/TaskResults';
 import TaskSubmission from '../components/TaskSubmission';
 import QuickStreakNotification from '../components/QuickStreakNotification';
 import MobileDashboard from '../components/MobileDashboard';
+import AchievementSystem from '../components/AchievementSystem';
+// import '../styles/pullToRefreshAnimations.css';
 import { useSwipeGestures } from '../hooks/useSwipeGestures';
 import { convertArrayToObject } from '../utils';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
@@ -22,7 +24,6 @@ import type { Image } from '../components/types';
 import './DashboardPage.css';
 import '../components/MobileDashboard.css';
 import '../styles/swipeAnimations.css';
-// import '../styles/pullToRefreshAnimations.css';
 import { API_BASE } from '../config';
 import { useStreak } from '../contexts/StreakContext';
 import PromptPal from '../utils/Images/prompt-pal-logo.png';
@@ -75,6 +76,25 @@ export default function DashboardPage({ userId, name }: DashboardPageProps) {
     const [isMobileEnhanced] = useState(true);
     
     const { streakData, refreshStreakData } = useStreak();
+
+    // NEW: Enhanced refresh handler for mobile dashboard
+    const handleRefresh = useCallback(async () => {
+        try {
+            // Refresh tasks data
+            await tasksQuery.refetch();
+            // Refresh criteria data
+            await criteriaQuery.refetch();
+            // Refresh streak data
+            await refreshStreakData();
+            
+            // Add a small delay for better UX
+            await new Promise(resolve => setTimeout(resolve, 500));
+            console.log('Dashboard refreshed successfully');
+        } catch (error) {
+            console.error('Failed to refresh dashboard:', error);
+            throw error; // Re-throw to show error state
+        }
+    }, []);
 
     // Add swipe gestures for the main task container (fallback mode)
     const taskSwipeProps = useSwipeGestures({
@@ -407,44 +427,49 @@ export default function DashboardPage({ userId, name }: DashboardPageProps) {
         );
     }
 
-    // Enhanced Mobile Dashboard (new swipe-enabled version)
+    // Enhanced Mobile Dashboard with Pull-to-Refresh (new version)
     if (isMobile && isMobileEnhanced && tasksQuery.data) {
         return (
-            <MobileDashboard
-                tasks={tasksQuery.data.map((taskItem: {
-                    id: string;
-                    name: string;
-                    question: string;
-                    Image?: Array<{
-                        imageQuestion?: {
-                            formats?: {
-                                thumbnail?: { url: string; };
+            <>
+                <MobileDashboard
+                    tasks={tasksQuery.data.map((taskItem: {
+                        id: string;
+                        name: string;
+                        question: string;
+                        Image?: Array<{
+                            imageQuestion?: {
+                                formats?: {
+                                    thumbnail?: { url: string; };
+                                };
                             };
-                        };
-                    }>;
-                }) => ({
-                    id: taskItem.id,
-                    name: taskItem.name,
-                    question: taskItem.question,
-                    difficulty: 'medium' as const, // You can derive this from your task data
-                    completed: !!currentTaskResult?.criterionResults?.length,
-                    score: currentTaskResult ? Math.round(
-                        (currentTaskResult.criterionResults.reduce((sum: number, c: CriterionResult) => sum + c.score, 0) /
-                            (currentTaskResult.criterionResults.length * 5)) * 100
-                    ) : undefined,
-                    Image: taskItem.Image
-                }))}
-                currentTaskIndex={currentTaskIndex}
-                onTaskChange={setCurrentTaskIndex}
-                onTaskSelect={(selectedTask) => {
-                    // Navigate to the selected task or trigger task selection
-                    console.log('Selected task:', selectedTask);
-                    // You could navigate to a detailed task view if needed
-                    // navigate(`/task/${selectedTask.id}`);
-                } }
-                streakData={streakData || undefined} onRefresh={function (): Promise<void> {
-                    throw new Error('Function not implemented.');
-                } }            />
+                        }>;
+                    }) => ({
+                        id: taskItem.id,
+                        name: taskItem.name,
+                        question: taskItem.question,
+                        difficulty: 'medium' as const,
+                        completed: !!currentTaskResult?.criterionResults?.length,
+                        score: currentTaskResult ? Math.round(
+                            (currentTaskResult.criterionResults.reduce((sum: number, c: CriterionResult) => sum + c.score, 0) /
+                                (currentTaskResult.criterionResults.length * 5)) * 100
+                        ) : undefined,
+                        Image: taskItem.Image
+                    }))}
+                    currentTaskIndex={currentTaskIndex}
+                    onTaskChange={setCurrentTaskIndex}
+                    onTaskSelect={(selectedTask) => {
+                        console.log('Selected task:', selectedTask);
+                    }}
+                    onRefresh={handleRefresh}
+                    streakData={streakData || undefined}
+                />
+                
+                {/* NEW: Add Achievement System to Mobile Dashboard */}
+                <AchievementSystem 
+                    streakData={streakData || { currentStreak: 0, longestStreak: 0, completedTasks: 0 }}
+                    recentScore={lastCompletedScore}
+                />
+            </>
         );
     }
 
@@ -489,10 +514,9 @@ export default function DashboardPage({ userId, name }: DashboardPageProps) {
                         className="mobile-task-card task-content swipe-container"
                         {...taskSwipeProps}
                         sx={{
-                            // Add visual feedback for swiping
                             transform: taskSwipeProps.isSwiping ? 'scale(1.02)' : 'scale(1)',
                             transition: taskSwipeProps.isSwiping ? 'none' : 'transform 0.2s ease',
-                            touchAction: 'pan-y', // Allow vertical scroll, capture horizontal
+                            touchAction: 'pan-y',
                         }}
                     >
                         {/* Mobile Task Header with Swipe Indicators */}
@@ -585,6 +609,12 @@ export default function DashboardPage({ userId, name }: DashboardPageProps) {
                     isNewRecord={isNewStreakRecord}
                     autoHideDuration={4000}
                 />
+
+                {/* NEW: Add Achievement System to Fallback Mobile Layout */}
+                <AchievementSystem 
+                    streakData={streakData || { currentStreak: 0, longestStreak: 0, completedTasks: 0 }}
+                    recentScore={lastCompletedScore}
+                />
             </>
         );
     }
@@ -658,6 +688,12 @@ export default function DashboardPage({ userId, name }: DashboardPageProps) {
             </Box>
             
             <RightSidebar />
+
+            {/* NEW: Add Achievement System to Desktop Layout */}
+            <AchievementSystem 
+                streakData={streakData || { currentStreak: 0, longestStreak: 0, completedTasks: 0 }}
+                recentScore={lastCompletedScore}
+            />
 
             {/* Desktop Tutorial */}
             <Joyride

@@ -1,8 +1,11 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import { API_BASE } from "../config";
 import "../components/LeftSidebar.css"; // Reuse sidebar styles for consistency
 import { useNavigate } from "react-router-dom";
+import { usePullToRefreshWithFeedback } from '../hooks/usePulltoRefresh';
+import PullToRefreshIndicator from '../components/PullToRefreshIndicator';
+// import '../styles/pullToRefreshAnimations.css';
 
 const today = new Date();
 
@@ -54,6 +57,45 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ userId }) => {
   const [tooltipPosition, setTooltipPosition] = useState<{ x: number; y: number } | null>(null);
   const navigate = useNavigate();
 
+  // NEW: Enhanced refresh handler with pull-to-refresh support
+  const handleRefresh = useCallback(async () => {
+    try {
+      // Refetch tasks and completed tasks
+      const tasksPromise = axios.get(`${API_BASE}/users/${userId}/tasks`);
+      const completedPromise = axios.get(`${API_BASE}/users/${userId}/completed-tasks`);
+      
+      const [tasksRes, completedRes] = await Promise.all([tasksPromise, completedPromise]);
+      
+      console.log('Refreshed tasks:', tasksRes.data.data);
+      console.log('Refreshed completed tasks:', completedRes.data.data);
+      
+      setTasks(tasksRes.data.data || []);
+      setCompletedTasks(completedRes.data.data || []);
+      
+      // Add small delay for better UX
+      await new Promise(resolve => setTimeout(resolve, 300));
+    } catch (err) {
+      console.error('Failed to refresh calendar data:', err);
+      setError("Failed to refresh tasks");
+      throw err;
+    }
+  }, [userId]);
+
+  // NEW: Add pull-to-refresh setup
+  const pullToRefreshProps = usePullToRefreshWithFeedback({
+    onRefresh: handleRefresh,
+    threshold: 70,
+    maxDistance: 100,
+    resistance: 0.7,
+    showVisualFeedback: true,
+    customMessages: {
+      pulling: 'Pull to refresh calendar...',
+      ready: 'Release to refresh!',
+      refreshing: 'Updating tasks...',
+    },
+  });
+
+  // Original data fetching logic
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
@@ -206,15 +248,51 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ userId }) => {
     );
   };
 
+  // NEW: Enhanced return with pull-to-refresh wrapper
   return (
-    <div style={{background: "#fdf7ef", minHeight: "100vh", position: "relative" }}>
-      <div style={{ maxWidth: '100vw', maxHeight: '100vh', background: "#fff7e6", borderRadius: 24, boxShadow: "0 2px 8px #f4e2c6", padding: 32 }}>
-        <h2 style={{ textAlign: "center", fontWeight: 700, fontSize: 28, marginBottom: 24 }}>Select Challenge By Date</h2>
+    <div 
+      style={{
+        background: "#fdf7ef", 
+        minHeight: "100vh", 
+        position: "relative",
+        overflow: "auto"
+      }}
+      ref={pullToRefreshProps.containerRef as React.MutableRefObject<HTMLDivElement | null>}
+      {...pullToRefreshProps}
+    >
+      {/* Pull to Refresh Indicator */}
+      <PullToRefreshIndicator
+        refreshState={pullToRefreshProps.refreshState as 'refreshing' | 'ready' | 'pulling' | 'idle'}
+        pullDistance={pullToRefreshProps.pullDistance}
+        progressPercentage={pullToRefreshProps.progressPercentage}
+        message={pullToRefreshProps.feedbackMessage}
+      />
+      
+      <div style={{ 
+        maxWidth: '100vw', 
+        maxHeight: '100vh', 
+        background: "#fff7e6", 
+        borderRadius: 24, 
+        boxShadow: "0 2px 8px #f4e2c6", 
+        padding: 32,
+        // NEW: Add transform for pull-to-refresh feedback
+        transform: pullToRefreshProps.isRefreshing 
+          ? 'translateY(50px)' 
+          : `translateY(${Math.min(pullToRefreshProps.pullDistance * 0.2, 15)}px)`,
+        transition: pullToRefreshProps.isRefreshing 
+          ? 'transform 0.3s ease' 
+          : 'none',
+      }}>
+        <h2 style={{ textAlign: "center", fontWeight: 700, fontSize: 28, marginBottom: 24 }}>
+          Select Challenge By Date
+        </h2>
+        
         <div style={{ display: "flex", justifyContent: "center", alignItems: "center", marginBottom: 24 }}>
           <button onClick={handlePrevMonth} style={{ background: "#fff", border: "1px solid #e0c9a6", borderRadius: "50%", width: 40, height: 40, fontSize: 24, cursor: "pointer", color: "#d6a16d", display: "flex", alignItems: "center", justifyContent: "center", marginRight: 16 }}>&lt;</button>
           <span style={{ fontWeight: 600, fontSize: 20, margin: "0 24px" }}>{monthNames[currentMonth]} {currentYear}</span>
           <button onClick={handleNextMonth} style={{ background: "#fff", border: "1px solid #e0c9a6", borderRadius: "50%", width: 40, height: 40, fontSize: 24, cursor: "pointer", color: "#d6a16d", display: "flex", alignItems: "center", justifyContent: "center", marginLeft: 16 }}>&gt;</button>
         </div>
+        
         {loading ? (
           <div style={{ textAlign: "center", margin: 32 }}>Loading tasks...</div>
         ) : error ? (
@@ -294,6 +372,7 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ userId }) => {
             </div>
           </>
         )}
+        
         <div style={{ display: "flex", justifyContent: "center", gap: 32, marginTop: 32, fontSize: 16 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <span style={{ color: "#4caf50", fontSize: 22 }}>✓</span> Completed Challenge

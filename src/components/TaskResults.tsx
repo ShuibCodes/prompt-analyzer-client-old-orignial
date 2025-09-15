@@ -12,6 +12,7 @@ import { motion } from 'framer-motion';
 import { TaskResult, CriteriaData } from '../types';
 import { useStreak } from '../contexts/StreakContext';
 import StreakCelebrationModal from './StreakCelebrationModal';
+// import AchievementSystem from './AchievementSystem';
 
 interface TaskResultsProps {
   taskResult: TaskResult;
