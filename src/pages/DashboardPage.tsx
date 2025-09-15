@@ -22,6 +22,7 @@ import type { Image } from '../components/types';
 import './DashboardPage.css';
 import '../components/MobileDashboard.css';
 import '../styles/swipeAnimations.css';
+// import '../styles/pullToRefreshAnimations.css';
 import { API_BASE } from '../config';
 import { useStreak } from '../contexts/StreakContext';
 import PromptPal from '../utils/Images/prompt-pal-logo.png';
@@ -417,7 +418,7 @@ export default function DashboardPage({ userId, name }: DashboardPageProps) {
                     Image?: Array<{
                         imageQuestion?: {
                             formats?: {
-                                thumbnail?: { url: string };
+                                thumbnail?: { url: string; };
                             };
                         };
                     }>;
@@ -428,8 +429,8 @@ export default function DashboardPage({ userId, name }: DashboardPageProps) {
                     difficulty: 'medium' as const, // You can derive this from your task data
                     completed: !!currentTaskResult?.criterionResults?.length,
                     score: currentTaskResult ? Math.round(
-                        (currentTaskResult.criterionResults.reduce((sum: number, c: CriterionResult) => sum + c.score, 0) / 
-                         (currentTaskResult.criterionResults.length * 5)) * 100
+                        (currentTaskResult.criterionResults.reduce((sum: number, c: CriterionResult) => sum + c.score, 0) /
+                            (currentTaskResult.criterionResults.length * 5)) * 100
                     ) : undefined,
                     Image: taskItem.Image
                 }))}
@@ -440,9 +441,10 @@ export default function DashboardPage({ userId, name }: DashboardPageProps) {
                     console.log('Selected task:', selectedTask);
                     // You could navigate to a detailed task view if needed
                     // navigate(`/task/${selectedTask.id}`);
-                }}
-                streakData={streakData || undefined}
-            />
+                } }
+                streakData={streakData || undefined} onRefresh={function (): Promise<void> {
+                    throw new Error('Function not implemented.');
+                } }            />
         );
     }
 
