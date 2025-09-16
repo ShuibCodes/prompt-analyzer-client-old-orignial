@@ -3,7 +3,7 @@ import axios from "axios";
 import { API_BASE } from "../config";
 import "../components/LeftSidebar.css"; // Reuse sidebar styles for consistency
 import { useNavigate } from "react-router-dom";
-import { usePullToRefreshWithFeedback } from '../hooks/usePulltoRefresh';
+import { usePullToRefreshWithFeedback } from '../hooks/usePullToRefresh';
 import PullToRefreshIndicator from '../components/PullToRefreshIndicator';
 // import '../styles/pullToRefreshAnimations.css';
 

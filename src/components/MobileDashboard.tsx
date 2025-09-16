@@ -282,7 +282,7 @@ import { Zap, ArrowLeft, ArrowRight, RefreshCw } from 'lucide-react';
 import SwipeableTaskCard from './SwipeableTaskCard';
 import PullToRefreshIndicator from './PullToRefreshIndicator';
 import { useSwipeGestures } from '../hooks/useSwipeGestures';
-import { usePullToRefreshWithFeedback } from '../hooks/usePulltoRefresh';
+import { usePullToRefreshWithFeedback } from '../hooks/usePullToRefresh';
 
 interface Task {
   id: string;
