@@ -5,10 +5,21 @@ import "../components/LeftSidebar.css"; // Reuse sidebar styles for consistency
 import { useNavigate } from "react-router-dom";
 
 const today = new Date();
+today.setHours(0, 0, 0, 0); // Set to midnight to compare dates accurately
 
 const monthNames = [
-  "January", "February", "March", "April", "May", "June",
-  "July", "August", "September", "October", "November", "December"
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
 ];
 
 function getDaysInMonth(year: number, month: number) {
@@ -44,14 +55,17 @@ interface CalendarPageProps {
 }
 
 const CalendarPage: React.FC<CalendarPageProps> = ({ userId }) => {
-  const [currentMonth, setCurrentMonth] = useState(5); // 0-indexed, 5 = June
-  const [currentYear, setCurrentYear] = useState(2025);
+  const [currentMonth, setCurrentMonth] = useState(today.getMonth()); // 0-indexed, 5 = June
+  const [currentYear, setCurrentYear] = useState(today.getFullYear());
   const [tasks, setTasks] = useState<Task[]>([]);
   const [completedTasks, setCompletedTasks] = useState<CompletedTask[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hoveredDay, setHoveredDay] = useState<number | null>(null);
-  const [tooltipPosition, setTooltipPosition] = useState<{ x: number; y: number } | null>(null);
+  const [tooltipPosition, setTooltipPosition] = useState<{
+    x: number;
+    y: number;
+  } | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -61,21 +75,30 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ userId }) => {
       try {
         // Fetch all tasks
         const tasksRes = await axios.get(`${API_BASE}/users/${userId}/tasks`);
-        console.log('All tasks:', tasksRes.data.data);
-        setTasks(tasksRes.data.data || []);
+        // Sort tasks by day
+        const sortedTasks = (tasksRes.data.data || []).sort(
+          (a: Task, b: Task) => {
+            if (a.Day && b.Day) {
+              return new Date(a.Day).getTime() - new Date(b.Day).getTime();
+            }
+            return 0;
+          }
+        );
+        setTasks(sortedTasks);
 
         // Fetch completed tasks
-        const completedRes = await axios.get(`${API_BASE}/users/${userId}/completed-tasks`);
-        console.log('Completed tasks:', completedRes.data.data);
+        const completedRes = await axios.get(
+          `${API_BASE}/users/${userId}/completed-tasks`
+        );
         setCompletedTasks(completedRes.data.data || []);
       } catch (err) {
-        console.error('Failed to fetch data:', err);
+        console.error("Failed to fetch data:", err);
         setError("Failed to fetch tasks");
       } finally {
         setLoading(false);
       }
     };
-    
+
     if (userId) {
       fetchData();
     }
@@ -121,39 +144,66 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ userId }) => {
 
   // Get task status for a specific day
   const getTaskStatusForDay = (day: number) => {
-    // Check if there's a task for this day
-    const taskForDay = tasks.find(task => {
+    const dayDate = new Date(currentYear, currentMonth, day);
+    dayDate.setHours(0, 0, 0, 0);
+
+    const taskForDay = tasks.find((task) => {
       if (typeof task.Day === "string") {
         const taskDate = new Date(task.Day);
-        return (
-          taskDate.getFullYear() === currentYear &&
-          taskDate.getMonth() === currentMonth &&
-          taskDate.getDate() === day
-        );
+        taskDate.setHours(0, 0, 0, 0);
+        return taskDate.getTime() === dayDate.getTime();
       }
       return false;
     });
 
     if (!taskForDay) {
-      return { hasTask: false, isCompleted: false, task: null, completedTask: null };
+      return {
+        hasTask: false,
+        isCompleted: false,
+        isLocked: true,
+        task: null,
+        completedTask: null,
+      };
     }
 
-    // Check if this task is completed
-    const completedTask = completedTasks.find(completed => 
-      completed.taskId === taskForDay.id
+    const completedTask = completedTasks.find(
+      (completed) => completed.taskId === taskForDay.id
     );
+    const isCompleted = !!completedTask;
+
+    // Locking logic
+    let isLocked = false;
+    const taskIndex = tasks.findIndex((t) => t.id === taskForDay.id);
+
+    if (dayDate > today) {
+      // For future tasks, check sequential unlocking.
+      if (taskIndex > 0) {
+        const prevTask = tasks[taskIndex - 1];
+        const prevCompletedTask = completedTasks.find(
+          (ct) => ct.taskId === prevTask.id
+        );
+        if (!prevCompletedTask || prevCompletedTask.percentageScore < 50) {
+          isLocked = true;
+        }
+      } else {
+        // The very first task, if it's in the future, is locked.
+        isLocked = true;
+      }
+    }
+    // For tasks on today or in the past, isLocked remains false.
 
     return {
       hasTask: true,
-      isCompleted: !!completedTask,
+      isCompleted,
+      isLocked,
       task: taskForDay,
-      completedTask: completedTask || null
+      completedTask: completedTask || null,
     };
   };
 
   const handleDayClick = (day: number) => {
     const status = getTaskStatusForDay(day);
-    if (status.hasTask && status.task) {
+    if (status.hasTask && status.task && !status.isLocked) {
       navigate(`/task/${status.task.id}`);
     }
   };
@@ -166,34 +216,71 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ userId }) => {
     const task = status.task;
     const completedTask = status.completedTask;
 
+    if (status.isLocked) {
+      return (
+        <div
+          style={{
+            background: "rgba(0, 0, 0, 0.9)",
+            color: "white",
+            padding: "12px 16px",
+            borderRadius: "8px",
+            fontSize: "14px",
+            maxWidth: "300px",
+            boxShadow: "0 4px 12px rgba(0, 0, 0, 0.3)",
+            zIndex: 1000,
+            lineHeight: "1.4",
+          }}
+        >
+          <div
+            style={{ fontWeight: "600", marginBottom: "8px", color: "#ffd700" }}
+          >
+            {task.name}
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            "🔒" <span>Locked</span>
+          </div>
+          <div style={{ fontSize: "12px", opacity: 0.8, marginTop: "8px" }}>
+            Complete the previous day's challenge with 50% or more to unlock.
+          </div>
+        </div>
+      );
+    }
+
     return (
-      <div style={{
-        background: "rgba(0, 0, 0, 0.9)",
-        color: "white",
-        padding: "12px 16px",
-        borderRadius: "8px",
-        fontSize: "14px",
-        maxWidth: "300px",
-        boxShadow: "0 4px 12px rgba(0, 0, 0, 0.3)",
-        zIndex: 1000,
-        lineHeight: "1.4"
-      }}>
-        <div style={{ fontWeight: "600", marginBottom: "8px", color: "#ffd700" }}>
+      <div
+        style={{
+          background: "rgba(0, 0, 0, 0.9)",
+          color: "white",
+          padding: "12px 16px",
+          borderRadius: "8px",
+          fontSize: "14px",
+          maxWidth: "300px",
+          boxShadow: "0 4px 12px rgba(0, 0, 0, 0.3)",
+          zIndex: 1000,
+          lineHeight: "1.4",
+        }}
+      >
+        <div
+          style={{ fontWeight: "600", marginBottom: "8px", color: "#ffd700" }}
+        >
           {task.name}
         </div>
         <div style={{ marginBottom: "6px" }}>
-          <strong>Status:</strong> {status.isCompleted ? "✅ Completed" : "❌ Not Started"}
+          <strong>Status:</strong>{" "}
+          {status.isCompleted ? "✅ Completed" : "❌ Not Started"}
         </div>
         {completedTask && (
           <>
             <div style={{ marginBottom: "4px" }}>
-              <strong>Score:</strong> {completedTask.score.toFixed(1)}/5.0 ({completedTask.percentageScore}%)
+              <strong>Score:</strong> {completedTask.score.toFixed(1)}/5.0 (
+              {completedTask.percentageScore}%)
             </div>
             <div style={{ marginBottom: "4px" }}>
               <strong>Attempts:</strong> {completedTask.attempts}
             </div>
             <div style={{ fontSize: "12px", opacity: 0.8 }}>
-              Completed: {new Date(completedTask.completedAt).toLocaleDateString()}
+              Completed:{" "}
+              {new Date(completedTask.completedAt).toLocaleDateString()}
             </div>
           </>
         )}
@@ -207,45 +294,174 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ userId }) => {
   };
 
   return (
-    <div style={{background: "#fdf7ef", minHeight: "100vh", position: "relative" }}>
-      <div style={{ maxWidth: '100vw', maxHeight: '100vh', background: "#fff7e6", borderRadius: 24, boxShadow: "0 2px 8px #f4e2c6", padding: 32 }}>
-        <h2 style={{ textAlign: "center", fontWeight: 700, fontSize: 28, marginBottom: 24 }}>Select Challenge By Date</h2>
-        <div style={{ display: "flex", justifyContent: "center", alignItems: "center", marginBottom: 24 }}>
-          <button onClick={handlePrevMonth} style={{ background: "#fff", border: "1px solid #e0c9a6", borderRadius: "50%", width: 40, height: 40, fontSize: 24, cursor: "pointer", color: "#d6a16d", display: "flex", alignItems: "center", justifyContent: "center", marginRight: 16 }}>&lt;</button>
-          <span style={{ fontWeight: 600, fontSize: 20, margin: "0 24px" }}>{monthNames[currentMonth]} {currentYear}</span>
-          <button onClick={handleNextMonth} style={{ background: "#fff", border: "1px solid #e0c9a6", borderRadius: "50%", width: 40, height: 40, fontSize: 24, cursor: "pointer", color: "#d6a16d", display: "flex", alignItems: "center", justifyContent: "center", marginLeft: 16 }}>&gt;</button>
+    <div
+      style={{
+        background: "#fdf7ef",
+        minHeight: "100vh",
+        position: "relative",
+      }}
+    >
+      <div
+        style={{
+          maxWidth: "100vw",
+          maxHeight: "100vh",
+          background: "#fff7e6",
+          borderRadius: 24,
+          boxShadow: "0 2px 8px #f4e2c6",
+          padding: 32,
+        }}
+      >
+        <h2
+          style={{
+            textAlign: "center",
+            fontWeight: 700,
+            fontSize: 28,
+            marginBottom: 24,
+          }}
+        >
+          Select Challenge By Date
+        </h2>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            marginBottom: 24,
+          }}
+        >
+          <button
+            onClick={handlePrevMonth}
+            style={{
+              background: "#fff",
+              border: "1px solid #e0c9a6",
+              borderRadius: "50%",
+              width: 40,
+              height: 40,
+              fontSize: 24,
+              cursor: "pointer",
+              color: "#d6a16d",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              marginRight: 16,
+            }}
+          >
+            &lt;
+          </button>
+          <span style={{ fontWeight: 600, fontSize: 20, margin: "0 24px" }}>
+            {monthNames[currentMonth]} {currentYear}
+          </span>
+          <button
+            onClick={handleNextMonth}
+            style={{
+              background: "#fff",
+              border: "1px solid #e0c9a6",
+              borderRadius: "50%",
+              width: 40,
+              height: 40,
+              fontSize: 24,
+              cursor: "pointer",
+              color: "#d6a16d",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              marginLeft: 16,
+            }}
+          >
+            &gt;
+          </button>
         </div>
         {loading ? (
-          <div style={{ textAlign: "center", margin: 32 }}>Loading tasks...</div>
+          <div style={{ textAlign: "center", margin: 32 }}>
+            Loading tasks...
+          </div>
         ) : error ? (
-          <div style={{ textAlign: "center", color: "red", margin: 32 }}>{error}</div>
+          <div style={{ textAlign: "center", color: "red", margin: 32 }}>
+            {error}
+          </div>
         ) : (
           <>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 0, marginBottom: 8, textAlign: "center", color: "#bfa77a", fontWeight: 600 }}>
-              <div>S</div><div>M</div><div>T</div><div>W</div><div>T</div><div>F</div><div>S</div>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(7, 1fr)",
+                gap: 0,
+                marginBottom: 8,
+                textAlign: "center",
+                color: "#bfa77a",
+                fontWeight: 600,
+              }}
+            >
+              <div>S</div>
+              <div>M</div>
+              <div>T</div>
+              <div>W</div>
+              <div>T</div>
+              <div>F</div>
+              <div>S</div>
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 0 }}>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(7, 1fr)",
+                gap: 0,
+              }}
+            >
               {weeks.map((week, wi) =>
                 week.map((d, di) => {
                   if (!d) {
                     return <div key={wi + "-" + di}></div>;
                   }
-                  
+
                   const status = getTaskStatusForDay(d);
                   const hasTask = status.hasTask;
                   const isCompleted = status.isCompleted;
-                  
+                  const isLocked = status.isLocked;
+
+                  const isToday =
+                    d === today.getDate() &&
+                    currentMonth === today.getMonth() &&
+                    currentYear === today.getFullYear();
+
+                  let background = "#f0f0f0";
+                  let border = "1px solid #e0e0e0";
+                  let color = "#ccc";
+                  let cursor = "not-allowed";
+                  let opacity = 0.5;
+
+                  if (hasTask) {
+                    if (isLocked) {
+                      background = "#e9e9e9";
+                      border = "1px solid #d0d0d0";
+                      color = "#aaa";
+                      cursor = "not-allowed";
+                      opacity = 0.7;
+                    } else {
+                      background = isCompleted ? "#e8f5e8" : "#f7f6f4";
+                      border = isCompleted
+                        ? "1px solid #4caf50"
+                        : "1px solid #e0c9a6";
+                      color = isToday ? "#bfa77a" : "#888";
+                      cursor = "pointer";
+                      opacity = 1;
+                    }
+                  }
+
                   return (
                     <div
                       key={wi + "-" + di}
-                      onClick={hasTask ? () => handleDayClick(d) : undefined}
+                      onClick={
+                        hasTask && !isLocked
+                          ? () => handleDayClick(d)
+                          : undefined
+                      }
                       onMouseEnter={(e) => {
                         if (hasTask) {
                           setHoveredDay(d);
                           const rect = e.currentTarget.getBoundingClientRect();
-                          setTooltipPosition({ 
-                            x: rect.left + rect.width / 2, 
-                            y: rect.top - 10 
+                          setTooltipPosition({
+                            x: rect.left + rect.width / 2,
+                            y: rect.top - 10,
                           });
                         }
                       }}
@@ -257,34 +473,48 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ userId }) => {
                         height: 70,
                         minHeight: 70,
                         borderRadius: 10,
-                        background: hasTask ? (isCompleted ? "#e8f5e8" : "#f7f6f4") : "#f0f0f0",
-                        border: hasTask ? (isCompleted ? "1px solid #4caf50" : "1px solid #e0c9a6") : "1px solid #e0e0e0",
+                        background,
+                        border,
                         display: "flex",
                         flexDirection: "column",
                         alignItems: "center",
                         justifyContent: "center",
                         fontWeight: 600,
                         fontSize: 18,
-                        color: hasTask ? (d === today.getDate() && currentMonth === today.getMonth() && currentYear === today.getFullYear() ? "#bfa77a" : "#888") : "#ccc",
+                        color,
                         position: "relative",
                         margin: 4,
                         boxSizing: "border-box",
-                        boxShadow: hasTask && d === today.getDate() && currentMonth === today.getMonth() && currentYear === today.getFullYear() ? "0 2px 8px #f4e2c6" : "none",
-                        transition: "background 0.2s, border 0.2s, transform 0.1s",
-                        cursor: hasTask ? "pointer" : "not-allowed",
-                        opacity: hasTask ? 1 : 0.5,
-                        transform: hasTask && hoveredDay === d ? "scale(1.05)" : "scale(1)"
+                        boxShadow:
+                          hasTask && !isLocked && isToday
+                            ? "0 2px 8px #f4e2c6"
+                            : "none",
+                        transition:
+                          "background 0.2s, border 0.2s, transform 0.1s",
+                        cursor,
+                        opacity,
+                        transform:
+                          hasTask && hoveredDay === d
+                            ? "scale(1.05)"
+                            : "scale(1)",
                       }}
                     >
                       <span>{d}</span>
                       {hasTask && (
-                        <span style={{ 
-                          color: isCompleted ? "#4caf50" : "#e57373", 
-                          fontSize: 22, 
-                          position: "absolute", 
-                          bottom: 6 
-                        }}>
-                          {isCompleted ? "✓" : "✗"}
+                        <span
+                          style={{
+                            fontSize: 22,
+                            position: "absolute",
+                            bottom: 6,
+                          }}
+                        >
+                          {isLocked ? (
+                            "🔒"
+                          ) : isCompleted ? (
+                            <span style={{ color: "#4caf50" }}>✓</span>
+                          ) : (
+                            <span style={{ color: "#e57373" }}>✗</span>
+                          )}
                         </span>
                       )}
                     </div>
@@ -294,12 +524,24 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ userId }) => {
             </div>
           </>
         )}
-        <div style={{ display: "flex", justifyContent: "center", gap: 32, marginTop: 32, fontSize: 16 }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            gap: 24,
+            marginTop: 32,
+            fontSize: 16,
+          }}
+        >
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <span style={{ color: "#4caf50", fontSize: 22 }}>✓</span> Completed Challenge
+            <span style={{ color: "#4caf50", fontSize: 22 }}>✓</span> Completed
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <span style={{ color: "#e57373", fontSize: 22 }}>✗</span> Not Completed
+            <span style={{ color: "#e57373", fontSize: 22 }}>✗</span> Not
+            Completed
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            🔒 Locked
           </div>
         </div>
       </div>
@@ -314,13 +556,13 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ userId }) => {
             transform: "translateX(-50%) translateY(-100%)",
             pointerEvents: "none",
             zIndex: 1000,
-            animation: "fadeIn 0.2s ease-in-out"
+            animation: "fadeIn 0.2s ease-in-out",
           }}
         >
           {formatTaskTooltip(hoveredDay)}
         </div>
       )}
-      
+
       {/* CSS Animation Styles */}
       <style>{`
         @keyframes fadeIn {
@@ -338,4 +580,4 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ userId }) => {
   );
 };
 
-export default CalendarPage; 
+export default CalendarPage;
