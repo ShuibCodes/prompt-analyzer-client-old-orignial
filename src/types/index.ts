@@ -28,10 +28,11 @@ export interface TaskData {
     name: string;
     question: string;
     Image?: string[];
+    Day?: string;
   };
 }
 
 export interface ResultsData {
   score: number;
   taskResults: TaskResult[];
-} 
+}
