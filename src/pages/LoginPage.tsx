@@ -280,6 +280,40 @@ export default function LoginPage({ onUserLogin }: LoginPageProps) {
                             Forgot your password?
                         </Button>
                     )}
+
+                    {/* Temporary bypass button for development */}
+                    <Divider sx={{ my: 2 }}>
+                        <Typography variant="caption" color="text.secondary">
+                            Development Only
+                        </Typography>
+                    </Divider>
+                    <Button
+                        fullWidth
+                        variant="outlined"
+                        onClick={() => {
+                            // Mock user data for development
+                            const mockUserId = 'dev-user-123';
+                            const mockUserName = 'Dev User';
+                            onUserLogin(mockUserId, mockUserName);
+                            navigate('/dashboard');
+                            toast.info('Bypassed login - Development mode', {
+                                position: "top-center",
+                                autoClose: 2000,
+                                theme: "colored",
+                            });
+                        }}
+                        sx={{
+                            textTransform: 'none',
+                            borderColor: '#ffa500',
+                            color: '#ffa500',
+                            '&:hover': {
+                                borderColor: '#ff8c00',
+                                bgcolor: 'rgba(255, 165, 0, 0.05)'
+                            }
+                        }}
+                    >
+                        🚀 Bypass Login (Dev Only)
+                    </Button>
                 </Box>
             </Paper>
         </Box>
