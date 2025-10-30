@@ -20,6 +20,7 @@ import ResetPassword from './pages/ResetPassword';
 import CalendarPage from './pages/CalendarPage.tsx';
 import TaskPage from './pages/TaskPage';
 import ProfilePage from './pages/ProfilePage';
+import LevelChallengesPage from './pages/LevelChallengesPage.tsx';
 
 // Theme
 const theme = createTheme({
@@ -149,6 +150,20 @@ function App() {
                                     </Layout>
                                 } 
                             />
+                            <Route
+                                path="/level-challenges"
+                                element={
+                                    <Layout>
+                                    {(props) => {
+                                        // This route is protected just like your other app pages
+                                        if ('onUserLogin' in props) {
+                                        return null; // shouldn't happen due to redirects
+                                        }
+                                        return <LevelChallengesPage />;
+                                    }}
+                                    </Layout>
+                                }
+                                />
                             <Route 
                                 path="/image-generation/task/:taskId" 
                                 element={

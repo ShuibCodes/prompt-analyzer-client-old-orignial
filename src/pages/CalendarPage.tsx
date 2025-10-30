@@ -5,9 +5,12 @@ import "../components/LeftSidebar.css"; // Reuse sidebar styles for consistency
 import { useNavigate } from "react-router-dom";
 import { usePullToRefreshWithFeedback } from '../hooks/usePullToRefresh';
 import PullToRefreshIndicator from '../components/PullToRefreshIndicator';
-// import '../styles/pullToRefreshAnimations.css';
 
+// Get current date
 const today = new Date();
+const todayYear = today.getFullYear();
+const todayMonth = today.getMonth();
+const todayDate = today.getDate();
 
 const monthNames = [
   "January", "February", "March", "April", "May", "June",
@@ -47,8 +50,9 @@ interface CalendarPageProps {
 }
 
 const CalendarPage: React.FC<CalendarPageProps> = ({ userId }) => {
-  const [currentMonth, setCurrentMonth] = useState(5); // 0-indexed, 5 = June
-  const [currentYear, setCurrentYear] = useState(2025);
+  // Set current month and year to today's date
+  const [currentMonth, setCurrentMonth] = useState(todayMonth); // 0-indexed
+  const [currentYear, setCurrentYear] = useState(todayYear);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [completedTasks, setCompletedTasks] = useState<CompletedTask[]>([]);
   const [loading, setLoading] = useState(false);
@@ -57,9 +61,11 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ userId }) => {
   const [tooltipPosition, setTooltipPosition] = useState<{ x: number; y: number } | null>(null);
   const navigate = useNavigate();
 
-  // NEW: Enhanced refresh handler with pull-to-refresh support
+  // Enhanced refresh handler with pull-to-refresh support
   const handleRefresh = useCallback(async () => {
     try {
+      setError(null);
+      
       // Refetch tasks and completed tasks
       const tasksPromise = axios.get(`${API_BASE}/users/${userId}/tasks`);
       const completedPromise = axios.get(`${API_BASE}/users/${userId}/completed-tasks`);
@@ -81,7 +87,7 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ userId }) => {
     }
   }, [userId]);
 
-  // NEW: Add pull-to-refresh setup
+  // Add pull-to-refresh setup
   const pullToRefreshProps = usePullToRefreshWithFeedback({
     onRefresh: handleRefresh,
     threshold: 70,
@@ -98,6 +104,8 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ userId }) => {
   // Original data fetching logic
   useEffect(() => {
     const fetchData = async () => {
+      if (!userId) return;
+      
       setLoading(true);
       setError(null);
       try {
@@ -118,9 +126,7 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ userId }) => {
       }
     };
     
-    if (userId) {
-      fetchData();
-    }
+    fetchData();
   }, [userId]);
 
   const daysInMonth = getDaysInMonth(currentYear, currentMonth);
@@ -161,6 +167,12 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ userId }) => {
     }
   };
 
+  // Add "Go to Today" function
+  const goToToday = () => {
+    setCurrentMonth(todayMonth);
+    setCurrentYear(todayYear);
+  };
+
   // Get task status for a specific day
   const getTaskStatusForDay = (day: number) => {
     // Check if there's a task for this day
@@ -198,6 +210,19 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ userId }) => {
     if (status.hasTask && status.task) {
       navigate(`/task/${status.task.id}`);
     }
+  };
+
+  // Check if a day is today
+  const isToday = (day: number) => {
+    return day === todayDate && 
+           currentMonth === todayMonth && 
+           currentYear === todayYear;
+  };
+
+  // Check if a day is in the past
+  const isPastDay = (day: number) => {
+    const dayDate = new Date(currentYear, currentMonth, day);
+    return dayDate < today;
   };
 
   // Format task details for tooltip
@@ -248,7 +273,6 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ userId }) => {
     );
   };
 
-  // NEW: Enhanced return with pull-to-refresh wrapper
   return (
     <div 
       style={{
@@ -275,7 +299,6 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ userId }) => {
         borderRadius: 24, 
         boxShadow: "0 2px 8px #f4e2c6", 
         padding: 32,
-        // NEW: Add transform for pull-to-refresh feedback
         transform: pullToRefreshProps.isRefreshing 
           ? 'translateY(50px)' 
           : `translateY(${Math.min(pullToRefreshProps.pullDistance * 0.2, 15)}px)`,
@@ -284,38 +307,154 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ userId }) => {
           : 'none',
       }}>
         <h2 style={{ textAlign: "center", fontWeight: 700, fontSize: 28, marginBottom: 24 }}>
-          Select Challenge By Date
+          Challenge Calendar
         </h2>
         
-        <div style={{ display: "flex", justifyContent: "center", alignItems: "center", marginBottom: 24 }}>
-          <button onClick={handlePrevMonth} style={{ background: "#fff", border: "1px solid #e0c9a6", borderRadius: "50%", width: 40, height: 40, fontSize: 24, cursor: "pointer", color: "#d6a16d", display: "flex", alignItems: "center", justifyContent: "center", marginRight: 16 }}>&lt;</button>
-          <span style={{ fontWeight: 600, fontSize: 20, margin: "0 24px" }}>{monthNames[currentMonth]} {currentYear}</span>
-          <button onClick={handleNextMonth} style={{ background: "#fff", border: "1px solid #e0c9a6", borderRadius: "50%", width: 40, height: 40, fontSize: 24, cursor: "pointer", color: "#d6a16d", display: "flex", alignItems: "center", justifyContent: "center", marginLeft: 16 }}>&gt;</button>
+        {/* Navigation Header */}
+        <div style={{ 
+          display: "flex", 
+          justifyContent: "space-between", 
+          alignItems: "center", 
+          marginBottom: 24,
+          flexWrap: "wrap",
+          gap: 16
+        }}>
+          <button 
+            onClick={handlePrevMonth} 
+            style={{ 
+              background: "#fff", 
+              border: "1px solid #e0c9a6", 
+              borderRadius: "50%", 
+              width: 40, 
+              height: 40, 
+              fontSize: 24, 
+              cursor: "pointer", 
+              color: "#d6a16d", 
+              display: "flex", 
+              alignItems: "center", 
+              justifyContent: "center" 
+            }}
+          >
+            &lt;
+          </button>
+          
+          <div style={{ display: "flex", alignItems: "center", gap: 16, flexDirection: "column" }}>
+            <span style={{ fontWeight: 600, fontSize: 20 }}>
+              {monthNames[currentMonth]} {currentYear}
+            </span>
+            <button 
+              onClick={goToToday}
+              style={{
+                background: "#4CAF50",
+                color: "white",
+                border: "none",
+                borderRadius: "20px",
+                padding: "8px 16px",
+                fontSize: 14,
+                cursor: "pointer",
+                fontWeight: 600
+              }}
+            >
+              Go to Today
+            </button>
+          </div>
+          
+          <button 
+            onClick={handleNextMonth} 
+            style={{ 
+              background: "#fff", 
+              border: "1px solid #e0c9a6", 
+              borderRadius: "50%", 
+              width: 40, 
+              height: 40, 
+              fontSize: 24, 
+              cursor: "pointer", 
+              color: "#d6a16d", 
+              display: "flex", 
+              alignItems: "center", 
+              justifyContent: "center" 
+            }}
+          >
+            &gt;
+          </button>
         </div>
         
         {loading ? (
           <div style={{ textAlign: "center", margin: 32 }}>Loading tasks...</div>
         ) : error ? (
-          <div style={{ textAlign: "center", color: "red", margin: 32 }}>{error}</div>
+          <div style={{ textAlign: "center", color: "red", margin: 32, background: "#ffebee", padding: 16, borderRadius: 8 }}>
+            <strong>Error:</strong> {error}
+            <br />
+            <button 
+              onClick={handleRefresh} 
+              style={{ 
+                marginTop: 8, 
+                padding: "8px 16px", 
+                background: "#f44336", 
+                color: "white", 
+                border: "none", 
+                borderRadius: 4, 
+                cursor: "pointer" 
+              }}
+            >
+              Retry
+            </button>
+          </div>
         ) : (
           <>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 0, marginBottom: 8, textAlign: "center", color: "#bfa77a", fontWeight: 600 }}>
-              <div>S</div><div>M</div><div>T</div><div>W</div><div>T</div><div>F</div><div>S</div>
+            {/* Day headers */}
+            <div style={{ 
+              display: "grid", 
+              gridTemplateColumns: "repeat(7, 1fr)", 
+              gap: 0, 
+              marginBottom: 8, 
+              textAlign: "center", 
+              color: "#bfa77a", 
+              fontWeight: 600 
+            }}>
+              <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
             </div>
+            
+            {/* Calendar grid */}
             <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 0 }}>
               {weeks.map((week, wi) =>
                 week.map((d, di) => {
                   if (!d) {
-                    return <div key={wi + "-" + di}></div>;
+                    return <div key={`${wi}-${di}`} style={{ height: 70, margin: 4 }}></div>;
                   }
                   
                   const status = getTaskStatusForDay(d);
                   const hasTask = status.hasTask;
                   const isCompleted = status.isCompleted;
+                  const todayFlag = isToday(d);
+                  const pastDay = isPastDay(d);
+                  
+                  // Dynamic styling based on status
+                  let backgroundColor = "#f0f0f0"; // default (no task)
+                  let borderColor = "#e0e0e0";
+                  let textColor = "#ccc";
+                  
+                  if (hasTask) {
+                    if (isCompleted) {
+                      backgroundColor = "#e8f5e8"; // green for completed
+                      borderColor = "#4caf50";
+                      textColor = "#2e7d32";
+                    } else {
+                      backgroundColor = "#fff3e0"; // orange for available
+                      borderColor = "#ff9800";
+                      textColor = "#ef6c00";
+                    }
+                  }
+                  
+                  if (todayFlag) {
+                    backgroundColor = "#e3f2fd"; // blue for today
+                    borderColor = "#2196f3";
+                    textColor = "#1976d2";
+                  }
                   
                   return (
                     <div
-                      key={wi + "-" + di}
+                      key={`${wi}-${di}`}
                       onClick={hasTask ? () => handleDayClick(d) : undefined}
                       onMouseEnter={(e) => {
                         if (hasTask) {
@@ -335,34 +474,53 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ userId }) => {
                         height: 70,
                         minHeight: 70,
                         borderRadius: 10,
-                        background: hasTask ? (isCompleted ? "#e8f5e8" : "#f7f6f4") : "#f0f0f0",
-                        border: hasTask ? (isCompleted ? "1px solid #4caf50" : "1px solid #e0c9a6") : "1px solid #e0e0e0",
+                        background: backgroundColor,
+                        border: `2px solid ${borderColor}`,
                         display: "flex",
                         flexDirection: "column",
                         alignItems: "center",
                         justifyContent: "center",
                         fontWeight: 600,
                         fontSize: 18,
-                        color: hasTask ? (d === today.getDate() && currentMonth === today.getMonth() && currentYear === today.getFullYear() ? "#bfa77a" : "#888") : "#ccc",
+                        color: textColor,
                         position: "relative",
                         margin: 4,
                         boxSizing: "border-box",
-                        boxShadow: hasTask && d === today.getDate() && currentMonth === today.getMonth() && currentYear === today.getFullYear() ? "0 2px 8px #f4e2c6" : "none",
-                        transition: "background 0.2s, border 0.2s, transform 0.1s",
+                        boxShadow: todayFlag ? "0 4px 12px rgba(33, 150, 243, 0.3)" : "none",
+                        transition: "all 0.2s ease",
                         cursor: hasTask ? "pointer" : "not-allowed",
-                        opacity: hasTask ? 1 : 0.5,
+                        opacity: pastDay && !hasTask ? 0.3 : 1,
                         transform: hasTask && hoveredDay === d ? "scale(1.05)" : "scale(1)"
                       }}
                     >
                       <span>{d}</span>
+                      
+                      {/* Today indicator */}
+                      {todayFlag && (
+                        <div style={{
+                          position: "absolute",
+                          top: "2px",
+                          right: "2px",
+                          background: "#2196f3",
+                          color: "white",
+                          fontSize: "8px",
+                          padding: "2px 4px",
+                          borderRadius: "4px",
+                          fontWeight: "bold"
+                        }}>
+                          TODAY
+                        </div>
+                      )}
+                      
+                      {/* Task status indicator */}
                       {hasTask && (
                         <span style={{ 
-                          color: isCompleted ? "#4caf50" : "#e57373", 
+                          color: isCompleted ? "#4caf50" : "#ff9800", 
                           fontSize: 22, 
                           position: "absolute", 
                           bottom: 6 
                         }}>
-                          {isCompleted ? "✓" : "✗"}
+                          {isCompleted ? "✓" : "○"}
                         </span>
                       )}
                     </div>
@@ -373,12 +531,28 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ userId }) => {
           </>
         )}
         
-        <div style={{ display: "flex", justifyContent: "center", gap: 32, marginTop: 32, fontSize: 16 }}>
+        {/* Legend */}
+        <div style={{ 
+          display: "flex", 
+          justifyContent: "center", 
+          gap: 32, 
+          marginTop: 32, 
+          fontSize: 16,
+          flexWrap: "wrap"
+        }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <span style={{ color: "#4caf50", fontSize: 22 }}>✓</span> Completed Challenge
+            <div style={{ width: 20, height: 20, background: "#e3f2fd", border: "2px solid #2196f3", borderRadius: 4 }}></div>
+            Today
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <span style={{ color: "#e57373", fontSize: 22 }}>✗</span> Not Completed
+            <span style={{ color: "#4caf50", fontSize: 22 }}>✓</span> Completed
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <span style={{ color: "#ff9800", fontSize: 22 }}>○</span> Available
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <div style={{ width: 20, height: 20, background: "#f0f0f0", border: "2px solid #e0e0e0", borderRadius: 4 }}></div>
+            No Task
           </div>
         </div>
       </div>
@@ -417,4 +591,4 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ userId }) => {
   );
 };
 
-export default CalendarPage; 
+export default CalendarPage;

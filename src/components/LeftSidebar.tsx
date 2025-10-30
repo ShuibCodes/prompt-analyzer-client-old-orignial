@@ -257,6 +257,26 @@ const LeftSidebar: React.FC<LeftSidebarProps> = ({
           </Link>
           
           <Link
+            className={`sidebar-link${location.pathname === "/level-challenges" ? " active" : ""}`}
+            to="/level-challenges"
+            onClick={handleLinkClick}
+            style={{ transition: 'all 0.2s ease' }}
+            onMouseEnter={(e) => {
+              if (!e.currentTarget.classList.contains('active')) {
+                e.currentTarget.style.transform = 'translateX(4px)';
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (!e.currentTarget.classList.contains('active')) {
+                e.currentTarget.style.transform = 'translateX(0)';
+              }
+            }}
+          >
+            <Target size={24} color="#111" /> Level Challenges
+          </Link>
+
+          
+          <Link
             className={`sidebar-link${location.pathname === "/image-generation" ? " active" : ""}`}
             to="/image-generation"
             onClick={handleLinkClick}
